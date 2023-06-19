@@ -1,6 +1,6 @@
 ---
 - name: Instalar y habilitar Internet Information Service
-  hosts: windows
+  hosts: all
   
   tasks:
   - name: Instalar el servicio de IIS
