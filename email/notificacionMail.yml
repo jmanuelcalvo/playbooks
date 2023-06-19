@@ -1,0 +1,23 @@
+- hosts: localhost
+  vars:
+  - producto: SuperMEgaLinux
+  - plantilla: TemplateDAyco
+  - sodisk: 10
+  - soram: 16
+  - socpu: 4
+  - sored: test123
+  - nombre: daycoPoc-Linux
+  - soproyecto: proyecto_prueba_cliente_prueba
+  - soidcliente: 12345
+
+
+  tasks:
+  - name: Sending an e-mail to localhost
+    mail:
+      host: 172.30.140.203
+      port: 25
+      to: ansible@localhost
+      subject: Nofificacion creacion del {{ producto }} usando la plantilla {{ plantilla }}
+      body: System {{ producto }} has been successfully provisioned.
+  
+

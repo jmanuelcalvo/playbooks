@@ -1,0 +1,11 @@
+---
+- name: Nofificacion a traves de ABC
+  hosts: all
+  gather_facts: no
+  tasks:
+  
+  - name: Nofiricacion
+    ansible.builtin.debug:
+      msg: 
+      - Se notifica la creacion o eliminacion de la  la VM servidorweb-jmanuel
+      - Con direcion IP X.X.X.X

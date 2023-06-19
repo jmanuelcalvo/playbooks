@@ -1,0 +1,13 @@
+---
+  - name: Validacion de espacio en disco
+    gather_facts: yes
+    hosts: all
+    tasks:
+    - name: Check /tmp freespace
+      shell: df /tmp --output\=avail | tail -1
+      register: tmp_freespace
+        
+    - fail:
+        msg: /tmp no tiene el espacio mínimo requerido para continuar 9Gb solicitados)
+      #when: tmp_freespace.stdout|float is lt 3000000
+      when: tmp_freespace.stdout|float is lt 7533036

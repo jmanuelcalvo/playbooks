@@ -1,0 +1,59 @@
+- name: Crear una instancia en ec2
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  vars:
+    name: redhatlinuxinstance
+    keypair: mykeypair
+    instance_type: t2.micro
+    image: ami-016eb5d644c333ccb
+    wait: yes
+    group: webserver
+    count: 1
+    region: us-east-1
+    security_group: my-jenkins-security-grp
+  tasks:
+
+   - name: Creacion de una instancia en EC2
+     amazon.aws.ec2_instance:
+       name: "{{ name }}"
+       region: "{{ region }}"
+       key_name: "{{ keypair }}"
+       instance_type: "{{ instance_type }}"
+       security_group: "{{ security_group }}"
+       network:
+         assign_public_ip: true
+         delete_on_termination: true
+       image_id: "{{ image }}"
+       volumes:
+         - device_name: /dev/xvda
+           ebs:
+             volume_size: 8
+             volume_type: gp2
+             delete_on_termination: true
+     register: ec2
+
+   - name: Recolectar informacion de la instancia
+     ansible.builtin.debug:
+       msg: "El id de la instancia es {{ ec2.instance_ids[0] }}"
+       
+   - name: Pause 10 segundos mientras se inicia la creacion de la instancia para obtener informacion
+     ansible.builtin.pause:
+       seconds: 20
+
+   - name: Traer informacion de la instancia
+     amazon.aws.ec2_instance_info:
+       instance_ids:
+         - "{{ ec2.instance_ids[0] }}"
+       region: us-east-1
+     register: ec2
+
+   - name: Getting Public IP
+     set_fact:
+       public_ip:  "{{ ec2 | json_query(jmesquery_public_ip) }}"
+     vars:
+       jmesquery_public_ip: 'instances[].network_interfaces[].private_ip_addresses[].association.public_ip'
+
+   - name: Mostrar la direccion IP
+     debug:
+       var: public_ip

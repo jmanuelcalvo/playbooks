@@ -1,0 +1,18 @@
+---
+  - name: Validar si un servicio se encuentra activo
+    hosts: all
+    gather_facts: yes
+    tasks:
+
+    - name: Validar iformacion del servicio https
+      ansible.builtin.systemd:
+        name: chronyd.service
+      register: service_status
+  
+    - debug:
+        var: service_status.status.ActiveState
+
+    - fail:
+        msg: /tmp no tiene el espacio mínimo requerido para continuar 9Gb solicitados)
+      #when: tmp_freespace.stdout|float is lt 3000000
+      when: service_status.status.ActiveState != 'active'

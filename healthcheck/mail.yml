@@ -1,0 +1,12 @@
+---
+- name: Envio de notificaciones
+  hosts: localhost
+  tasks:
+  - name: Sending an e-mail to localhost
+    mail:
+      host: 192.168.64.2
+      port: 25
+      to: jmanuel@aap.jmanuelcalvo.com
+      subject: Nofificacion health check 
+      body: Systemhas been successfully checked
+    delegate_to: localhost

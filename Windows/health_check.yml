@@ -1,0 +1,11 @@
+---
+- name: Realizar validaciones de Windows
+  hosts: all
+  
+  tasks:
+  - name: Revisar los servicios activos
+    ansible.windows.win_shell: Get-Service
+
+  - name: Revisar los Procesos activos
+    ansible.windows.win_shell: Get-Process 
+

@@ -1,0 +1,29 @@
+<html>
+ <body>
+   <h2>Este es el script de configuracion para {{ elemento }}</h2>
+   <br>
+   <p>
+<br>
+	El elemento es: {{ elemento }}
+<br>
+        La subred es: {{ subred }}
+<br>
+        El EVI es: {{ EVI }}
+<br>
+<br>
+   </p>
+   <h3> ADJUNTO SE ENVIA SCRIPT CON TODOS LOS PARAMETROS </h3>
+
+   <br>
+    <p>
+       Este correo es generado por el equipo de Ansible de AT&T
+    <p>
+   </p>Powered by Jinja. Hosts in inventory: <p><strong>
+   <ul>
+     {% for hst in groups.all %}
+      <li>{{ hst }}</li>
+	 {% endfor %}
+	  </strong>
+   </ul>
+ </body>
+</html>

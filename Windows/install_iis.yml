@@ -1,0 +1,23 @@
+---
+- name: Instalar y habilitar Internet Information Service
+  hosts: windows
+  
+  tasks:
+  - name: Instalar el servicio de IIS
+    win_feature:
+      name: Web-Server
+      state: present
+
+  - name: Iniciar el servicio de IIS
+    win_service:
+      name: W3Svc
+      state: started
+
+  - name: Crear un archivo Web index.html
+    win_copy:
+      content: "{{ iis_test_message }}"
+      dest: C:\Inetpub\wwwroot\index.html
+
+  - name: Mostrar direccion IP del sitio Web
+    debug:
+      msg: "http://{{ ansible_host }}"

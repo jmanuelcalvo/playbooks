@@ -1,0 +1,11 @@
+---
+  - name: Iniciar servicio
+    hosts: all
+    gather_facts: yes
+    tasks:
+
+    - name: Make sure a service unit is running
+      ansible.builtin.systemd:
+        state: started
+        name: chronyd.service
+

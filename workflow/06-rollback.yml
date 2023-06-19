@@ -1,0 +1,10 @@
+---
+- name: Eliminacion de la instancia virtual
+  hosts: all
+  gather_facts: no
+  tasks:
+  
+  - name: Eliminacion de la maquina vittual
+    ansible.builtin.debug:
+      msg: 
+      - Se elimino de forma satisfactoria la maquina virtual

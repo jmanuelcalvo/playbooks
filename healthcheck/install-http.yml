@@ -1,0 +1,46 @@
+---
+- name: Instalacion y alistamineto de un servidor web apache
+  hosts: all
+  tasks:
+  - name: 1. Instalar la ultima version del paquete httpd
+    ansible.builtin.yum:
+      name: httpd
+      state: latest
+
+  - name: 3. Instalar la ultima version del paquete firewalld
+    ansible.builtin.yum:
+      name: firewalld
+      state: latest
+  
+  - name: 4. Habiliar el servicio de firewalld
+    ansible.builtin.service:
+      name: firewalld
+      enabled: yes
+      state: started
+  
+  - name: 3. Habiliar el puerto http en el firewall local
+    firewalld:
+      service: http
+      permanent: yes
+      immediate: true      
+      state: enabled 
+  
+  - name: 4. Poner contenido en el servidor web apache
+    ansible.builtin.copy:
+      content: '<h1> Red Hat su mejor aliado </h1>'
+      dest: /var/www/html/index.html
+  
+  
+  - name: 5. Habiliar el servicio de httpd
+    ansible.builtin.service:
+      name: httpd
+      enabled: yes
+      state: started
+  
+  - name: 6. Probar que el servicio este funcionando
+    ansible.builtin.uri:
+      url: "http://{{ ansible_host}}"
+
+  - name: 7. Probar que el servicio este funcionando
+    ansible.builtin.debug:
+      msg: Ingrese a la IP {{ ansible_host}} a traves del navegador

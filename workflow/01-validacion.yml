@@ -1,0 +1,9 @@
+---
+- name: Validacion de los pre-requisitos para la creacion de una maquina
+  hosts: all
+  gather_facts: no
+  tasks:
+  
+  - name: Validacion
+    ansible.builtin.debug:
+      msg: Los recursos necesarios para la creacion de la maquina existen 

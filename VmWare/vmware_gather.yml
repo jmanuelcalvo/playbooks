@@ -1,0 +1,16 @@
+---
+- name: Traer informacion del VmWare
+  hosts:  localhost
+  become: false
+  collections:
+    - community.vmware
+
+  tasks:
+  - name: Gather all registered virtual machines
+    community.vmware.vmware_vm_info:
+      folder: /SDDC-Datacenter/Workloads/sandbox-zs6vs/
+    delegate_to: localhost
+    register: vminfo
+
+  - debug:
+      var: vminfo.virtual_machines

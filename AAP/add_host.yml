@@ -1,0 +1,12 @@
+---
+- name: Adicionar un host al inventario
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+
+  - name: Add a host alias that we reach through a tunnel (Ansible 2.0 and newer)
+    ansible.builtin.add_host:
+      hostname: jmanuel
+      ansible_host: 192.168.0.5
+      ansible_port: 22

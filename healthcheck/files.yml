@@ -1,0 +1,14 @@
+---
+- name: Validar si un archivo de configuracion existe
+  hosts: all
+
+  tasks:
+  - name: Validar si el archivo de config exite
+    stat:
+      path: /etc/passwd
+    register: register_name
+
+  - name: Registrar si el archivo existe
+    debug:
+      msg: "El archivo o directorio existe"
+    when: register_name.stat.exists

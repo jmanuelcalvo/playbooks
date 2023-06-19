@@ -1,0 +1,76 @@
+---
+- name: Playbook inicio de contenedores Odoo
+  hosts: all
+  gather_facts: no
+  vars:
+    #cliente: "redhat"
+    #puerto: 8171
+    cliente:
+    db_path: "/var/lib/{{ cliente }}"
+    puerto:
+  tasks:
+
+  - name: Validar si la variable cliente esta definidas
+    fail:
+      msg: "La variable 'cliente' no esta definida o esta vacia"
+    when: (cliente is not defined) or (cliente|length == 0)
+
+  - name: Validar si la variable puerto esta definidas
+    fail:
+      msg: "La variable 'puerto' no esta definida o esta vacia"
+    when: (puerto is not defined) or (puerto|length == 0)
+
+  - name: "Validar si el puerto {{ puerto }} esta en uso"
+    wait_for:
+      port: "{{ puerto }}"
+      delay: 2
+      state: stopped
+      timeout: 3
+      msg: "El Puerto {{ puerto }} esta abierto, la aplicación ya está instalada y en funcionamien"
+
+  - name: "Crear directorio de BD {{ db_path }}"
+    ansible.builtin.file:
+      path: "{{ db_path }}"
+      state: directory
+      mode: '0755'
+
+  - name: "Crear pod {{ cliente }} para agrupar los contenedores"
+    containers.podman.podman_pod:
+      name: "{{ cliente }}"
+      state: started
+      ports:
+        - "{{ puerto }}:8069"
+
+  - name: Ejecutar contenedor de BD
+    containers.podman.podman_container:
+      name: "db-{{ cliente }}"
+      image: docker.io/postgres:13
+      state: started
+      detach: true
+      pod: "{{ cliente }}"
+      volumes: "{{ db_path }}:/var/lib/postgresql/data:Z"
+      env:
+        POSTGRES_USER: "odoo"
+        POSTGRES_PASSWORD: "odoo"
+        POSTGRES_DB: "postgres"
+
+  - name: Ejecutar contenedor de aplicaciones Odoo
+    containers.podman.podman_container:
+      name: "odoo-{{ cliente }}"
+      image: docker.io/odoo
+      state: started
+      detach: true
+      pod: "{{ cliente }}"
+      env:
+        DB_PORT_5432_TCP_ADDR: "db-{{ cliente }}"
+
+  - name: Permitir el puerto {{ puerto }} en el firewall local de la maquina
+    ansible.posix.firewalld:
+      port: "{{ puerto }}/tcp"
+      permanent: true
+      immediate: true
+      state: enabled
+
+  - name: Mensaje de entrega
+    ansible.builtin.debug:
+      msg: Se crearon satisfactoriamente los contenedores asociados con el cliente {{ cliente }} por el puerto {{ puerto }}

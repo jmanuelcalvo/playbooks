@@ -1,0 +1,7 @@
+---
+- name: Validar si el servidor contesta ping
+  hosts: all
+  tasks:
+
+  - name: Example from an Ansible Playbook
+    ansible.builtin.ping:

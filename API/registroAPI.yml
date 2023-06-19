@@ -1,0 +1,24 @@
+---
+- name: Enviar requerimiento POST
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    - producto: SuperMEgaLinux
+    - plantilla: TemplateDAyco
+    - sodisk: 10
+    - soram: 16
+    - socpu: 4
+    - sored: test123
+    - nombre: daycoPoc-Linux
+    - soproyecto: proyecto_prueba_cliente_prueba
+    - soidcliente: 12345
+  tasks:
+
+    - name: Login to a form based webpage, then use the returned cookie to access the app in later tasks
+      shell: 'curl --location --request POST "http://XXX.74.215.5:8069/ansible_register_data?producto={{ producto }}%201&plantilla={{ plantilla }}&nombre={{ nombre }}&sodisk={{ sodisk }}&soram={{ soram }}&socpu={{ socpu }}&sored={{ sored }}&soproyecto={{ soproyecto }}&soidcliente={{ soidcliente }}" --header ""\""Content-Type: application/json"'
+      register: result
+
+    - name: Salida del la informacion enviada
+      debug:
+        msg: "Salida de la creacion de maquina virtual {{ result }}"
