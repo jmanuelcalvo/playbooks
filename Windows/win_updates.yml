@@ -1,0 +1,8 @@
+---
+- hosts: all
+  name: Playbook de parcheo de maquinas Windowsa
+  tasks:
+    - name: Instalar Actualizaciones de windows
+      win_updates:
+        category_names: "{{ categories | default(omit) }}"
+        reboot: '{{ reboot_server | default(true) }}'
