@@ -1,0 +1,10 @@
+---
+- name: Windows Features
+  hosts: all
+  
+  tasks:
+ 
+  - name: Habilitar o deshabilitar una Feature de Windows
+    ansible.windows.win_feature:
+      name: {{ feature }}
+      state: {{ state }}
