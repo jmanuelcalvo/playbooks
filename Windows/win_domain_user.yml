@@ -1,0 +1,23 @@
+---
+- name: Windows Users
+  hosts: all
+  
+  tasks:
+  - name: Ensure each account is created
+    win_domain_user:
+      name: '{{ item.name }}'
+      upn: '{{ item.name }}@MY.DOMAIN.COM'
+      password: '{{ item.password }}'
+      password_never_expires: no
+      groups:
+      - Test User
+      - Application
+      company: Ansible
+      update_password: on_create
+    loop:
+    - name: Test User
+      password: Password
+    - name: Admin User
+      password: SuperSecretPass01
+    - name: Dev User
+      password: '@fvr3IbFBujSRh!3hBg%wgFucD8^x8W5'
