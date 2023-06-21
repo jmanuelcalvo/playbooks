@@ -8,3 +8,9 @@
     ansible.windows.win_feature:
       name: {{ feature }}
       state: {{ state }}
+    register: win_feature
+
+
+  - name: "Reiniciar si la instalación de la función {{ feature }} lo requiere"
+    ansible.windows.win_reboot:
+    when: win_feature.reboot_required
