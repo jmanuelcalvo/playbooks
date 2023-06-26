@@ -6,6 +6,8 @@ https://ansible-rulebook.readthedocs.io/en/stable/installation.html
 
 https://www.ansible.com/blog/getting-started-with-event-driven-ansible
 
+https://www.youtube.com/watch?v=aqQq5vD8-n0&ab_channel=RedHatAnsibleAutomation
+
 Instalacion de rulebook en mi maquina RHEL 8
 
 ```
