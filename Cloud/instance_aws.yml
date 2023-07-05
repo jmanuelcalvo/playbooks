@@ -44,7 +44,7 @@
    - name: Traer informacion de la instancia
      amazon.aws.ec2_instance_info:
        instance_ids:
-         - "{{ ec2.instance_ids[0] }}"
+         - "{{ ec2.instance_ids[0] }}"
        region: us-east-1
      register: ec2
 
