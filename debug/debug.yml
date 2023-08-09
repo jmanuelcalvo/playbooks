@@ -1,0 +1,7 @@
+---
+- name: Mostrar info en la pantalla
+  hosts: all
+  tasks:
+  - name: Mostrar mensaje de debug
+    ansible.builtin.debug:
+      msg: El playbook se ejecuto correctamente
