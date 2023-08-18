@@ -4,11 +4,12 @@
   gather_facts: no
   tasks:
 
-   - name: Eliminar una instancia en particular por ID
+
+   - name: Terminate every running instance in a region. Use with EXTREME caution.
      amazon.aws.ec2_instance:
        state: absent
-       instance_ids:
-         - "{{ instance_id }}"
+       filters:
+         instance_ids: "{{ instance_id }}"
        register: ec2
 
    - name: Recolectar informacion de la instancia
