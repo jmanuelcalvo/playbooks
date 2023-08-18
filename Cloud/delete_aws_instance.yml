@@ -8,7 +8,7 @@
      amazon.aws.ec2_instance:
        state: absent
        instance_ids:
-         - {{ instance_id }}
+         - "{{ instance_id }}"
        register: ec2
 
    - name: Recolectar informacion de la instancia
