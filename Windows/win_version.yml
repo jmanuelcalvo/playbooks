@@ -1,0 +1,10 @@
+---
+- hosts: all
+  tasks:
+    - name: Obtener la version de Window
+      win_shell: "systeminfo /fo csv | ConvertFrom-Csv | select OS*, System*, Hotfix* | Format-List"
+      register: windows_version
+
+    - name: Imprimir información de host de Windows
+      debug:
+        msg: "{{ windows_version.stdout_lines }}"

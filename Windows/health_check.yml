@@ -4,8 +4,19 @@
   
   tasks:
   - name: Revisar los servicios activos
-    ansible.windows.win_shell: Get-Service
+    ansible.windows.win_shell: Get-Service | Where-Object {$_.Status -eq "Running"}
+    register: servicios
+
+  - name: informe los servicios habilitados
+    debug:
+      var: servicios.stdout_lines
 
   - name: Revisar los Procesos activos
-    ansible.windows.win_shell: Get-Process 
+    ansible.windows.win_shell: Get-Process
+    register: procesos
 
+  - name: informe los Procesos en ejecucion
+    debug:
+      var: procesos.stdout_lines
+    
+    

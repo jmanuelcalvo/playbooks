@@ -1,0 +1,11 @@
+---
+- name: Control de servicio especifico en Windows
+  hosts: all
+
+  tasks:
+    
+    - name: Inicializar Apaga o reinicia un servicio
+      win_service:
+        name: "{{ service }}"
+        state: "{{ status }}"
+

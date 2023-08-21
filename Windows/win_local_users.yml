@@ -4,24 +4,22 @@
   
   tasks:
     - name: Crear grupo local para contener nuevos usuarios
-    win_group:
-      name: LocalGroup
-      description: Allow access to C:\Development folder
+      ansible.windows.win_group:
+        name: LocalGroup
+        description: Allow access to C:\Development folder
 
-  - name:  Crear usuario local
-    win_user:
-      name: '{{ item.name }}'
-      password: '{{ item.password }}'
-      groups: LocalGroup
-      update_password: no
-      password_never_expires: yes
-    loop:
-    - name: User1
-      password: Password1
-    - name: User2
-      password: Password2
+    - name:  Crear usuario local
+      win_user:
+        name: '{{ item.name }}'
+        password: '{{ item.password }}'
+        groups: LocalGroup
+        update_password: no
+        password_never_expires: yes
+      loop:
+      - name: ansible01
+        password: Password123.
 
-  - name: Crear carpeta Development
-    win_file:
-      path: C:\Development
-      state: directory
+    - name: Crear carpeta Development
+      ansible.windows.win_user:
+        path: C:\Development
+        state: directory

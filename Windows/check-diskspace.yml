@@ -1,0 +1,20 @@
+---
+- name: Chequear los espacios en disco de las maquinas
+  hosts: all
+
+  tasks:
+    - name: "Comprobar espacio libre en C:"
+      win_shell: "write-host ([math]::Round((Get-PSDrive C | Select-Object Free).free / 1024 / 1024 / 1024,2))"
+      register: freespace
+
+    - name: informe de espacio libre en disco
+      debug:
+        msg: |
+          "{{ freespace.stdout }} GB"
+
+
+    - name: "Fallar si no hay espacio suficiente, seteado en {{ freespaceint }}"
+      fail:
+        msg: "VM {{inventory_hostname}} no tiene espacio suficiente"
+      #when: "freespaceint < GBespacio"
+      when: freespace.stdout | int < 8

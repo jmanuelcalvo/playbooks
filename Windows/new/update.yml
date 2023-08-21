@@ -1,0 +1,29 @@
+---
+- name: Windows Update Playbook
+  hosts: all
+  gather_facts: false
+  tasks:
+  - name: Download update programs
+    ansible.windows.win_updates:
+      category_names:
+        - CriticalUpdates
+        - SecurityUpdates
+        - Updates
+      server_selection: managed_server
+      state: downloaded
+      log_path: C:\Windows\Temp\01-descarga.txt
+
+      
+  - name: Apply update programs
+    ansible.windows.win_updates:
+      category_names:
+        - CriticalUpdates
+        - SecurityUpdates
+        - Updates
+      server_selection: managed_server
+      state: installed
+      log_path: C:\Windows\Temp\01-actualizacion.txt
+
+    register: result
+
+  - debug: var=result
