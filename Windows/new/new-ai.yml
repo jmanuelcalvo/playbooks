@@ -1,0 +1,20 @@
+---
+- name: Playbook actualizacion Wondows
+  gather_facts: yes
+  hosts: all
+  tasks: 
+
+  - name: install all windows updates
+    ansible.windows.win_updates:
+      category_names:
+        - CriticalUpdates
+        - SecurityUpdates
+        - UpdateRollups
+      state: installed
+    register: update_result
+
+  - name: Mostrar salida
+    ansible.builtin.debug: var=update_result
+
+      
+
