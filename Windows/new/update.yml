@@ -9,6 +9,7 @@
         - CriticalUpdates
         - SecurityUpdates
         - Updates
+        - Definition Updates
       #server_selection: managed_server
       state: downloaded
       log_path: C:\Windows\Temp\01-descarga.txt
@@ -20,6 +21,7 @@
         - CriticalUpdates
         - SecurityUpdates
         - Updates
+        - Definition Updates
      # server_selection: managed_server
       state: installed
       log_path: C:\Windows\Temp\01-actualizacion.txt
