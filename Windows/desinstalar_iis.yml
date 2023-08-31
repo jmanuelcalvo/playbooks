@@ -1,5 +1,5 @@
 ---
-- name: Instalar el servicio web iis
+- name: Des Instalar el servicio web iis
   hosts: all
 
   tasks:
@@ -9,7 +9,7 @@
         state: stopped
     
     
-    - name: Instalar el IIS
+    - name: Deshabilitar el IIS
       win_feature:
         name: Web-Server
         state: absent
