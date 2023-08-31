@@ -1,0 +1,21 @@
+---
+- name: Instalar el servicio web iis
+  hosts: all
+
+  tasks:
+    - name: Bajar el servicio
+      win_service:
+        name: W3Svc
+        state: stopped
+    
+    
+    - name: Instalar el IIS
+      win_feature:
+        name: Web-Server
+        state: absent
+
+    - name: Remove a file, if present
+      ansible.windows.win_file:
+        path: C:\Inetpub\wwwroot\index.html
+        state: absent
+
