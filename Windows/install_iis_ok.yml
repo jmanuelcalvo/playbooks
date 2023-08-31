@@ -1,19 +1,23 @@
+---
+- name: Instalar y habilitar Internet Information Service
+  hosts: all
+
   tasks:
-    - name: Install iis
-      ansible.windows.win_feature:
-        name: Web-Server
-        state: present
+  - name: Install iis
+    ansible.windows.win_feature:
+      name: Web-Server
+      state: present
 
-    - name: Start iis service
-      ansible.windows.win_service:
-        name: W3Svc
-        state: started
+  - name: Start iis service
+    ansible.windows.win_service:
+      name: W3Svc
+      state: started
 
-    - name: Create website index.html
-      ansible.windows.win_copy:
-        content: "{{ iis_test_message }}"
-        dest: C:\Inetpub\wwwroot\index.html
+  - name: Create website index.html
+    ansible.windows.win_copy:
+      content: "{{ iis_test_message }}"
+      dest: C:\Inetpub\wwwroot\index.html
 
-    - name: Show website address
-      ansible.builtin.debug:
-        msg: http://{{ ansible_host }}
+  - name: Show website address
+    ansible.builtin.debug:
+      msg: http://{{ ansible_host }}
