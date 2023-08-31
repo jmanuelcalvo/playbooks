@@ -1,7 +1,7 @@
 ---
 - name: Realizar validaciones de Windows
   hosts: all
-  
+
   tasks:
   - name: Revisar los servicios activos
     ansible.windows.win_shell: Get-Service | Where-Object {$_.Status -eq "Running"}
@@ -18,5 +18,25 @@
   - name: informe los Procesos en ejecucion
     debug:
       var: procesos.stdout_lines
-    
-    
+
+  - name: Obtener valores de los discos
+    community.windows.win_disk_facts:
+
+  - name: Tamaño total del disco
+    debug:
+      msg: '{{ disksize_gib }}'
+    vars:
+      disk: '{{ ansible_facts.disks|selectattr("system_disk")|first }}'
+      disksize_gib_human: '{{ disk.size|filesizeformat(true) }}'   # returns "223.6 GiB" (human readable)
+      disksize_gib: '{{ (disk.size/1024|pow(3))|round|int }} GiB'  # returns "224 GiB" (value in GiB)
+      disksize_gb_human: '{{ disk.size|filesizeformat }}'        # returns "240.1 GB" (human readable)
+      disksize_gb: '{{ (disk.size/1000|pow(3))|round|int }} GB'  # returns "240 GB" (value in GB)
+
+  - name: "Comprobar espacio libre en C:"
+    win_shell: "write-host ([math]::Round((Get-PSDrive C | Select-Object Free).free / 1024 / 1024 / 1024,2))"
+    register: freespace
+
+  - name: informe de espacio libre en disco
+    debug:
+      msg: |
+          "{{ freespace.stdout }} GB"
