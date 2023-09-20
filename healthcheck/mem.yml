@@ -11,3 +11,6 @@
         msg: /tmp no tiene el espacio mínimo requerido para continuar 9Gb solicitados)
       #when: tmp_freespace.stdout|float is lt 3000000
       when: tmp_freespace.stdout|float is lt 7533036
+    - name: Check linux memory
+      ansible.builtin.shell: free -m | grep Swap | awk '{print $2}'
+      register: memcapture_current

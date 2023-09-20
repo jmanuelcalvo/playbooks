@@ -1,0 +1,28 @@
+
+
+---
+- name: Reducir espacio de una base de datos en MSSQL
+  hosts: tus_servidores_sql
+  gather_facts: no
+  tasks:
+    - name: Ejecutar el comando SQL para reducir espacio de la base de datos
+      community.mssql.mssql_query:
+        server: nombre_del_servidor_sql  # Reemplaza con el nombre de tu servidor SQL
+        database: nombre_de_la_base_de_datos  # Reemplaza con el nombre de tu base de datos
+        login_host: localhost
+        login_user: usuario_sql
+        login_password: contraseña_sql
+        query: |
+          USE [nombre_de_la_base_de_datos];
+          DBCC SHRINKDATABASE ([nombre_de_la_base_de_datos], TRUNCATEONLY);
+      delegate_to: localhost
+      register: resultado_comando_sql
+
+    - name: Mostrar resultado
+      debug:
+        var: resultado_comando_sql
+
+
+
+
+
