@@ -24,7 +24,7 @@
 
   - name: Tamaño total del disco
     ansible.builtin.debug:
-      msg: 'Tamaño total del disco {{ disksize_gib }}'
+      msg: "Tamaño total del disco C: es {{ disksize_gib }}"
     vars:
       disk: '{{ ansible_facts.disks|selectattr("system_disk")|first }}'
       disksize_gib_human: '{{ disk.size|filesizeformat(true) }}'   # returns "223.6 GiB" (human readable)
