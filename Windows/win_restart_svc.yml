@@ -1,11 +1,24 @@
 ---
 - name: Control de servicio especifico en Windows
+  gather_facts: false
+  vars:
+    service: spooler
+    state: started # absent,paused,started,stopped,restarted
   hosts: all
 
   tasks:
-    
-    - name: Inicializar Apaga o reinicia un servicio
-      win_service:
-        name: "{{ service }}"
-        state: "{{ status }}"
 
+    - name: Obtener informacion del servicio {{ service }}
+      ansible.windows.win_service_info:
+        name: "{{ service }}"
+      register: service_info
+
+    - name: Validar el estado del servicio previamente
+      debug:
+        msg: "{{ service_info.services[0].state }}"
+
+    - name: Iniciar, Apagar o reinicia un servicio
+      ansible.windows.win_service:
+        name: "{{ service }}"
+        state: "{{ state }}"
+      when: service_info.services[0].state == "stopped"
