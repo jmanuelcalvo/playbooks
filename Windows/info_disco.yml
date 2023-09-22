@@ -1,21 +1,14 @@
 ---
-- hosts: all 
+- hosts: all
   gather_facts: yes
-  tasks: 
+  tasks:
   - name: Información sobre discos
     win_disk_facts:
 
-  - name: Obtener el tamaño de el primer disco
-    debug:
-      var: ansible_facts.disks[0].size
-
   - name: Convierte el primer disco del sistema a varios formatos
     debug:
-      msg: '{{ disksize_gib }} vs {{ disksize_gib_human }}'
+      msg: "El tamaño total del disco C: es {{ disksize_gib }}"
     vars:
-      # Get first system disk
       disk: '{{ ansible_facts.disks|selectattr("system_disk")|first }}'
-
-      # Mostrar el tamaño del disco en Gibibytes
-      disksize_gib_human: '{{ disk.size|filesizeformat(true) }}' 
+              # Mostrar el tamaño del disco en Gibibytes
       disksize_gib: '{{ (disk.size/1024|pow(3))|round|int }} GiB'
