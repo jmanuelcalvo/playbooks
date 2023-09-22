@@ -1,6 +1,9 @@
 ---
 - name: Chequear los espacios en disco de las maquinas
   hosts: all
+  gather_facts: false
+  vars:
+    disksize: 7
 
   tasks:
     - name: "Comprobar espacio libre en C:"
@@ -16,5 +19,4 @@
     - name: "Fallar si no hay espacio suficiente, seteado en {{ freespaceint }}"
       fail:
         msg: "VM {{inventory_hostname}} no tiene espacio suficiente"
-      #when: "freespaceint < GBespacio"
-      when: freespace.stdout | int < 8
+      when: "freespace.stdout | int is lt disksize "
