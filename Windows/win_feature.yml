@@ -1,15 +1,17 @@
 ---
 - name: Windows Features
   hosts: all
-  
-  tasks: 
+  vars:
+    feature: Web-Server
+    state: present # estado puede ser present o absent
+
+  tasks:
   - name: Habilitar o deshabilitar una Feature de Windows
     ansible.windows.win_feature:
-      name: {{ feature }}
-      state: {{ state }}
+      name: "{{ feature }}"
+      state: "{{ state }}"
     register: win_feature
-    
+
   - name: "Reiniciar si la instalación de la función {{ feature }} lo requiere"
     ansible.windows.win_reboot:
     when: win_feature.reboot_required
-
