@@ -15,3 +15,5 @@
   - name: "Reiniciar si la instalación de la función {{ feature }} lo requiere"
     ansible.windows.win_reboot:
     when: win_feature.reboot_required
+
+# NOTA: Este modulo funciona con los servidores que tienen habilitado el modulo ServerManager (Get-Module -ListAvailable)
