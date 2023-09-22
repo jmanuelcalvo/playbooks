@@ -1,4 +1,4 @@
-- name: Aplicación de parches en windows server
+- name: Revision de parches en windows server
   hosts: all
   tasks:
     - name: Comprobar si faltan actualizaciones
@@ -20,25 +20,21 @@
         log_path: C:\Windows\Temp\Pre-AllUpdatesFound.txt
       register: update_results
 
+#    - name: Informe de resultados actualizados
+#      debug:
+#        var: update_results
+
+
     - name: Informe de resultados actualizados
-      debug:
-        var: update_results
+      ansible.builtin.debug:
+        msg: |
+          {% for k in update_results.updates %}
+          {{ update_results.updates[k].title }}
+          {% endfor %}
 
-
-#    - name: Search-only, return list of found updates (if any), log to C:\ansible_wu.txt
-#      ansible.windows.win_updates:
-#        category_names: SecurityUpdates
-#        state: searched
-#        log_path: C:\ansible_wu.txt
-#      register: update_results1
-#
-#    - name: Informe de resultados actualizados
-#      debug:
-#        var: update_results1
-        
-#    - name: Informe de resultados actualizados
-#      debug:
-#        msg: |
-#          {% for k in update_results.updates %}
-#          {{ update_results.updates[k].title }}
-#          {% endfor %}
+    - name: Informe de Categorias encontradas
+      ansible.builtin.debug:
+        msg: |
+          {% for k in update_results.updates %}
+          {{ update_results.updates[k].categories }}
+          {% endfor %}
