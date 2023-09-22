@@ -3,21 +3,21 @@
   hosts: all
 
   tasks:
-  - name: Install iis
+  - name: Habiliatar el servicio de IIS
     ansible.windows.win_feature:
       name: Web-Server
       state: present
 
-  - name: Start iis service
+  - name: Iniciar el servicio de IIS
     ansible.windows.win_service:
       name: W3Svc
       state: started
 
-  - name: Create website index.html
+  - name: Crear un archivo Web index.html
     ansible.windows.win_copy:
       content: "{{ iis_test_message }}"
       dest: C:\Inetpub\wwwroot\index.html
 
-  - name: Show website address
+  - name: Mostrar direccion IP del sitio Web
     ansible.builtin.debug:
       msg: http://{{ ansible_host }}
