@@ -1,5 +1,6 @@
 ---
 - hosts: all
+  gather_facts: false
   tasks:
     - name: Obtener la version de Window
       win_shell: "systeminfo /fo csv | ConvertFrom-Csv | select OS*, System*, Hotfix* | Format-List"
