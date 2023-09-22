@@ -16,7 +16,7 @@
         msg: "El espacio disponible del discpo {{ disk }}: es {{ freespace.stdout }} GB"
 
 
-    - name: "Fallar si no hay espacio suficiente, seteado en {{ freespaceint }}"
+    - name: "Fallar si no hay espacio suficiente"
       fail:
         msg: "La maquina {{inventory_hostname}} tiene menos de {{ disksize }} GB disponibles"
       when: "freespace.stdout | int is lt disksize"
