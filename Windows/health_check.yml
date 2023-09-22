@@ -8,7 +8,7 @@
     register: servicios
 
   - name: informe los servicios habilitados
-    debug:
+    ansible.builtin.debug:
       var: servicios.stdout_lines
 
   - name: Revisar los Procesos activos
@@ -16,15 +16,15 @@
     register: procesos
 
   - name: informe los Procesos en ejecucion
-    debug:
+    ansible.builtin.debug:
       var: procesos.stdout_lines
 
   - name: Obtener valores de los discos
     community.windows.win_disk_facts:
 
   - name: Tamaño total del disco
-    debug:
-      msg: '{{ disksize_gib }}'
+    ansible.builtin.debug:
+      msg: 'Tamaño total del disco {{ disksize_gib }}'
     vars:
       disk: '{{ ansible_facts.disks|selectattr("system_disk")|first }}'
       disksize_gib_human: '{{ disk.size|filesizeformat(true) }}'   # returns "223.6 GiB" (human readable)
@@ -33,10 +33,10 @@
       disksize_gb: '{{ (disk.size/1000|pow(3))|round|int }} GB'  # returns "240 GB" (value in GB)
 
   - name: "Comprobar espacio libre en C:"
-    win_shell: "write-host ([math]::Round((Get-PSDrive C | Select-Object Free).free / 1024 / 1024 / 1024,2))"
+    ansible.windows.win_shell: "write-host ([math]::Round((Get-PSDrive C | Select-Object Free).free / 1024 / 1024 / 1024,2))"
     register: freespace
 
   - name: informe de espacio libre en disco
-    debug:
+    ansible.builtin.debug:
       msg: |
-          "{{ freespace.stdout }} GB"
+          "Tamaño disponible del disco {{ freespace.stdout }} GB"
