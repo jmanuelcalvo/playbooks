@@ -1,5 +1,6 @@
 ---
 - name: Reiniciar maquina
+  gather_facts: false
   hosts: all
   tasks:
   - name: Reboot the machine with all defaults
