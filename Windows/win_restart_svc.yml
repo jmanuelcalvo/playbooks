@@ -17,8 +17,8 @@
       debug:
         msg: "{{ service_info.services[0].state }}"
 
-    - name: Iniciar, Apagar o reinicia un servicio
+    - name: "Se {{ state }} el servicio {{ service }}"
       ansible.windows.win_service:
         name: "{{ service }}"
         state: "{{ state }}"
-      when: service_info.services[0].state == "stopped"
+          #when: service_info.services[0].state == "state"
