@@ -7,8 +7,7 @@
       win_service:
         name: W3Svc
         state: stopped
-    
-    
+
     - name: Deshabilitar el IIS
       win_feature:
         name: Web-Server
@@ -19,3 +18,8 @@
         path: C:\Inetpub\wwwroot\index.html
         state: absent
 
+    - name: Reboot the machine with all defaults
+      ansible.windows.win_reboot:
+      register: result
+
+    - debug: var=result
