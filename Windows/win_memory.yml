@@ -1,0 +1,11 @@
+---
+- hosts: all
+  gather_facts: false
+  tasks:
+    - name: Obtener la informacion de la memoria de Window
+      win_shell: "systeminfo /fo csv | ConvertFrom-Csv | select Virtual*, Total* | Format-List"
+      register: windows_version
+
+    - name: Imprimir información de Memoria de Windows
+      debug:
+        msg: "{{ windows_version.stdout_lines }}"
