@@ -19,8 +19,8 @@
     ansible.builtin.debug:
       var: procesos.stdout_lines
 
-  - name: Obtener valores de los discos
-    community.windows.win_disk_facts:
+#  - name: Obtener valores de los discos
+#    community.windows.win_disk_facts:
 
 
   - name: "Comprobar espacio libre en C:"
