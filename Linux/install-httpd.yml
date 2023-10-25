@@ -1,6 +1,9 @@
 ---
 - name: Instalacion y alistamineto de un servidor web apache
   hosts: all
+  gather_facts: false
+  vars:
+    - content: "<h1> Red Hat su mejor aliado </h1>"
   tasks:
   - name: 1. Instalar la ultima version del paquete httpd
     ansible.builtin.yum:
@@ -27,7 +30,7 @@
   
   - name: 4. Poner contenido en el servidor web apache
     ansible.builtin.copy:
-      content: '<h1> Red Hat su mejor aliado </h1>'
+      content: "{{ content }}"
       dest: /var/www/html/index.html
   
   
