@@ -1,0 +1,11 @@
+---
+- name: Playbook que permite incluir timeouts dentro de los flujos de trabajo
+  gather_facts: false
+  hosts: localhost
+  vars:
+    - minutos: 1
+  tasks:
+  - name: Esperar {{ minutos }} minutos para continuar con el play
+    ansible.builtin.wait_for:
+      timeout: "{{ minutos * 60 }}"
+    delegate_to: localhost
