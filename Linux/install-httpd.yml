@@ -40,3 +40,7 @@
   - name: 6. Probar que el servicio este funcionando
     ansible.builtin.uri:
       url: "http://{{ ansible_host}}"
+
+  - name: 7. Mostrar el URL
+    ansible.builtin.debug:
+      msg: "http://{{ ansible_host}}"
