@@ -3,8 +3,9 @@
 windows.jmanuelcalvo.com
 
 [linux]
-192.168.64.3
+192.168.64.3 _awx_description="my host 1"
 192.168.64.7
+
 
 [win:vars]
 ansible_connection=winrm
