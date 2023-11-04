@@ -1,0 +1,10 @@
+---
+- name: Playbook para crear backup de una maquina Linux
+  hosts: "{{ HOSTS }}"
+  tasks:
+
+  - name: Crear la carpeta /var/backup en la maquina local
+    ansible.builtin.file:
+      path: /var/backup
+      state: directory
+      mode: '0777'
