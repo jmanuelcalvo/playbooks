@@ -11,7 +11,7 @@
        state: absent
        filters:
          tag:Name: "{{ instance_name }}"
-    register: ec2
+     register: ec2
 
    - name: Recolectar informacion de la instancia
      ansible.builtin.debug:
