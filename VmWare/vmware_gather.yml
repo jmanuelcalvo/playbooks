@@ -8,7 +8,7 @@
   tasks:
   - name: Gather all registered virtual machines
     community.vmware.vmware_vm_info:
-      folder: /SDDC-Datacenter/Workloads/sandbox-nqvrg/
+      #folder: /SDDC-Datacenter/Workloads/sandbox-nqvrg/
       folder: "Workloads/{{ sandbox }}"
     delegate_to: localhost
     register: vminfo
