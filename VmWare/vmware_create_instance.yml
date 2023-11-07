@@ -17,30 +17,12 @@
           type: thin                                               # Formato del disco thin, thick o eagerzeroedthick 
           datastore: 'WorkloadDatastore'                           # Nombre del Datastore donde se va a desplegar
         hardware:
-#          memory_mb: '{{ soram | int * 1024 }}'                   # Cantidad de Memoria RAM a asignar
           memory_mb: '{{ soram }}'                   # Cantidad de Memoria RAM a asignar
           num_cpus: '{{ socpu }}'                                 # Cantidad de CPUs a asignar
           scsi: paravirtual                                        # Formato de conector de disco atavez de VMware  
         networks:                                                  # Configuracion de RED   
         - name: 'segment-{{ sandbox }}'                             # Nombre de la Red a asignar
         wait_for_ip_address: false
-#        customization:
-#          domain: jmanuelcalvo.com
-#          dns_servers:
-#            - 8.9.9.9
-#            - 7.8.8.9
-#          dns_suffix:
-#            - example.com
-#            - example2.com
-#          script_text: |
-#            #!/bin/bash
-#            touch /tmp/touch-from-playbook
-#          ip: '{{ IP }}'                                           # Dirección IP a asignar    
-#          netmask: '{{ MASK }}'                                    # Mascara de Red a asignar
-#          gateway: '{{ GW }}'                                      # Gateway a asignar
-#          dns_servers: '{{ DNS }}'                                 # Dirección (es) IP de los DNS a asignar
-#          device_type: vmxnet3                                     #Tipo de Interfaz de Red a asignar
-#          start_connected: True
         state: poweredon                                           # Estado del Servidor luego del despliegue
       register: createvm
       
