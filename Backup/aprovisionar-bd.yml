@@ -1,9 +1,9 @@
 ---
 - name: Aprovisionar ambiente productivo
   gather_facts: true
-  hosts: instance03
+  hosts: "{{ HOSTS }}"
   vars:
-    mysql_root_password: ABCde123.
+    mysql_root_password: 
   tasks:
   - name: instalar el motor de Base de datos Mariadb
     ansible.builtin.dnf:
