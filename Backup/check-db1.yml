@@ -1,0 +1,30 @@
+---
+- name: Aprovisionar ambiente productivo
+  gather_facts: false
+  hosts: instance03
+  vars:
+    mysql_root_password: ABCde123.
+    database: testdb
+  tasks:
+
+  - name: Query intermedio a la base de datos {{ database }} 
+    community.mysql.mysql_query:
+      login_user: root
+      login_password: "{{ mysql_root_password }}"
+      login_db: "{{ database }}"
+      query: SELECT * FROM customers WHERE id = %(id_val)s AND address = %(address_val)s
+      named_args:
+        id_val: 1
+        address_val: 444
+    register: query2
+    #failed_when: query2.rowcount.0 == 0
+
+#  - name: "Fayar cuando el resultado de: {{ query2.rowcount.0 }} sea igual a 1"
+#    ansible.builtin.debug:
+#      msg: El registro esperado no se encuentra en la base de datos
+#    failed_when: query2.rowcount.0 == 0
+  - name: Fallar en caso que no la busqueda anterior no arreje los resultados esperados
+    ansible.builtin.fail:
+      msg: "El registro esperado no se encuentra en la base de datos"
+    when: query2.rowcount.0 == 0
+
