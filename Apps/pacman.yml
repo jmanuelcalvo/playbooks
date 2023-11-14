@@ -1,0 +1,34 @@
+---
+- name: Desplegar la aplicacion Pacman en un servidor Web
+  gather_facts: false
+  hosts: all
+  tasks:
+
+    - name: Verificar si httpd está instalado
+      ansible.builtin.stat:
+        path: /usr/sbin/httpd
+      register: httpd_installed
+
+    - name: Mostrar mensaje de error si httpd no está instalado
+      ansible.builtin.debug:
+        msg: "Error: El paquete httpd no está instalado en este servidor."
+      when: httpd_installed.stat.exists == false
+
+    - name: Clonar el repo de pacman en la ruta del servidor Web
+      ansible.builtin.git:
+        repo: https://github.com/jmanuelcalvo/Pacman-html5.git
+        dest: /var/www/html/packman
+        single_branch: yes
+        version: master
+        
+    - name: Verificar el estado del servidor web
+      ansible.builtin.uri:
+        url: "http://{{ ansible_host}}"
+        method: GET
+      register: result
+      ignore_errors: yes  # Ignora errores de conexión, ya que el servidor podría no estar disponible
+
+    - name: Mostrar mensaje de error si el estado no es 200
+      debug:
+        msg: "Error: El servidor web no está devolviendo un código de estado 200."
+      when: result.status != 200
