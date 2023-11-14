@@ -17,11 +17,11 @@
     - name: Clonar el repo de pacman en la ruta del servidor Web
       ansible.builtin.git:
         repo: https://github.com/jmanuelcalvo/Pacman-html5.git
-        dest: /var/www/html/packman
+        dest: /var/www/html/pacman
                 
     - name: Verificar el estado del servidor web
       ansible.builtin.uri:
-        url: "http://{{ ansible_host}}/packman"
+        url: "http://{{ ansible_host}}/pacman"
         method: GET
       register: result
       ignore_errors: yes  # Ignora errores de conexión, ya que el servidor podría no estar disponible
