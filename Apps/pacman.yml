@@ -18,12 +18,10 @@
       ansible.builtin.git:
         repo: https://github.com/jmanuelcalvo/Pacman-html5.git
         dest: /var/www/html/packman
-        single_branch: yes
-        version: master
-        
+                
     - name: Verificar el estado del servidor web
       ansible.builtin.uri:
-        url: "http://{{ ansible_host}}"
+        url: "http://{{ ansible_host}}/packman"
         method: GET
       register: result
       ignore_errors: yes  # Ignora errores de conexión, ya que el servidor podría no estar disponible
