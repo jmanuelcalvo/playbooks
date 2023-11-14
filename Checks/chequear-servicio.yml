@@ -1,0 +1,32 @@
+---
+  - name: Validar si un servicio se encuentra activo
+    hosts: linux
+    gather_facts: true
+    vars:
+      servicio: chronyd
+    tasks:
+
+    - name: Validar informacion del servicio {{ servicio }}
+      ansible.builtin.systemd:
+        name: "{{ servicio }}.service"
+      register: service_status
+  
+    - debug:
+        #var: service_status.status.ActiveState
+        var: service_status.status.ActiveState
+
+    - name: Fallar si el servicio está desactivado
+      ansible.builtin.fail:
+        msg: "El servicio nombre_del_servicio no está activo en el servidor."
+      #when: "'ActiveState' in service_status and service_status['ActiveState'] != 'active'"
+      #when: "active" == service_status.status.ActiveState
+      when: '"active" != service_status.status.ActiveState'
+
+
+    - name: Reporte de Salida
+      ansible.builtin.debug:
+        msg: 
+          - "Ejecutado el: {{ ansible_date_time.date }} {{ ansible_date_time.hour }}:{{ ansible_date_time.minute }}"
+          - "Resultado: El nodo {{ ansible_host }} cuenta con el servicio {{ servicio }} {{ service_status.status.ActiveState }}"
+      #when: ansible_host is defined
+

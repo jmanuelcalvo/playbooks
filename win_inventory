@@ -3,8 +3,8 @@
 windows.jmanuelcalvo.com
 
 [linux]
-192.168.64.3 _awx_description="my host 1"
-192.168.64.7
+192.168.64.3 _awx_description="my host 1" ansible_user=root
+192.168.64.7 ansible_user=root
 
 
 [win:vars]
