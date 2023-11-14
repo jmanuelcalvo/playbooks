@@ -14,36 +14,30 @@
     ansible.builtin.yum:
       name: firewalld
       state: latest
-  
+
   - name: 4. Habiliar el servicio de firewalld
     ansible.builtin.service:
       name: firewalld
       enabled: yes
       state: started
-  
+
   - name: 3. Habiliar el puerto http en el firewall local
     firewalld:
       service: http
       permanent: yes
-      immediate: true      
-      state: enabled 
-  
-  - name: 4. Poner contenido en el servidor web apache
-    ansible.builtin.copy:
-      content: "{{ content }}"
-      dest: /var/www/html/index.html
-  
-  
-  - name: 5. Habiliar el servicio de httpd
+      immediate: true
+      state: enabled
+
+  - name: 4. Habiliar el servicio de httpd
     ansible.builtin.service:
       name: httpd
       enabled: yes
       state: started
-  
-  - name: 6. Probar que el servicio este funcionando
+
+  - name: 5. Probar que el servicio este funcionando
     ansible.builtin.uri:
       url: "http://{{ ansible_host}}"
 
-  - name: 7. Mostrar el URL
+  - name: 6. Mostrar el URL
     ansible.builtin.debug:
       msg: "http://{{ ansible_host}}"
