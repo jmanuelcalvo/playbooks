@@ -1,11 +1,10 @@
 ---
 - name: Playbook para crear backup de una maquina Linux
-  hosts: 192.168.64.7
-  #hosts: "{{ HOSTS }}"
+  hosts: all
   vars:
     mysql_root_password: ABCde123.
     mysql_username: root
-    db_name: testdb
+    db_name: 
   tasks:
 
   - name: Crear la carpeta /var/backup en la maquina local
