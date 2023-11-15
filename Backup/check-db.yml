@@ -1,41 +1,35 @@
 ---
 - name: Realizar chequeos de la Base de Datos
-  gather_facts: false
-  hosts: instance03
+  gather_facts: true
+  hosts: all
   vars:
     mysql_root_password: ABCde123.
     database: testdb
   tasks:
 
-  - name: Validar si la base de datos {{ database }} esta creada
-    community.mysql.mysql_db:
-      name: "{{ database }}"
-      state: present
-      login_user: root
-      login_password: "{{ mysql_root_password }}"
-    register: database_exists
-
-  - name: Imprimir los resultados de la validacion
-    ansible.builtin.debug:
-      var: database_exists
-
   - name: Traer informacion de MySQL version, usuarios, bases de datos
     community.mysql.mysql_info:
       login_user: root
       login_password: "{{ mysql_root_password }}"
-      filter: 
-      #- version
+      filter:
+      - version
       - databases
       #- users
       exclude_fields: db_size
       return_empty_dbs: true
     register: database_facts
 
-  - name: Imprimir los resultados de la valid
+  - name: Fallar si la bd {{ database }} no se encuentra el el servidor {{ ansible_host }}
+    ansible.builtin.fail:
+      msg: "La base de datos {{ database }} no está activo en el servidor."
+    when: '"{{ database }}" not in database_facts.databases'
+    #when: '"database" not in database_facts.databases'
+
+  - name: Imprimir listado de bases de datos creadas
     ansible.builtin.debug:
       var: database_facts.databases
 
-  - name: Simple select query to acme db
+  - name: Realizar una consulta a la base de datos {{ database }}
     community.mysql.mysql_query:
       login_user: root
       login_password: "{{ mysql_root_password }}"
@@ -43,22 +37,22 @@
       query: SELECT * FROM customers
     register: r_query
 
-  - name: What happened
+  - name: Resultado de la busqueda
     ansible.builtin.debug:
       msg: "{{ r_query }}"
 
-  - name: Query intermedio a la base de datos {{ database }} 
-    community.mysql.mysql_query:
-      login_user: root
-      login_password: "{{ mysql_root_password }}"
-      login_db: "{{ database }}"
-      query: SELECT * FROM customers WHERE id = %(id_val)s AND address = %(address_val)s
-      named_args:
-        id_val: 1
-        address_val: 4444
-    register: query2
-    failed_when: query2.failed == true
-
-  - name: What happened
-    ansible.builtin.debug:
-      msg: "{{ query2 }}"
+#  - name: Query intermedio a la base de datos {{ database }}
+#    community.mysql.mysql_query:
+#      login_user: root
+#      login_password: "{{ mysql_root_password }}"
+#      login_db: "{{ database }}"
+#      query: SELECT * FROM customers WHERE id = %(id_val)s AND address = %(address_val)s
+#      named_args:
+#        id_val: 1
+#        address_val: 4444
+#    register: query2
+#    failed_when: query2.failed == true
+#
+#  - name: What happened
+#    ansible.builtin.debug:
+#      msg: "{{ query2 }}"
