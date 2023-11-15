@@ -1,0 +1,17 @@
+---
+  - name: Validar si un servicio se encuentra activo
+    hosts: linux
+    gather_facts: false
+    vars:
+      concepto: jose
+    tasks:
+
+    - name: Run Tdarr Updater
+      command: grep {{ concepto }} /var/log/messages
+      register: updater_result
+
+    - name: Show Output
+      debug:
+        #msg: "{{ updater_result.stdout_lines }}"
+        msg: "{{ updater_result.rc }}"
+      #failed_when: presence is changed
