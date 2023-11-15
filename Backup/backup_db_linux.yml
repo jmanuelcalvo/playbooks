@@ -1,10 +1,10 @@
 ---
 - name: Playbook para crear backup de una maquina Linux
-  hosts: all
+  hosts: 192.168.64.7
   vars:
     mysql_root_password: ABCde123.
     mysql_username: root
-    db_name: 
+    db_name: testdb
   tasks:
 
   - name: Crear la carpeta /var/backup en la maquina local
@@ -16,3 +16,13 @@
 
   - name: mysqldump
     ansible.builtin.shell: mysqldump -u {{ mysql_username }} -p{{ mysql_root_password }} {{ db_name }} > /var/backup/{{ db_name }}-{{ ansible_date_time.date }}-{{ ansible_date_time.hour }}-{{ ansible_date_time.minute }}.sql
+
+  - name: Obtener nombres de los archivos de la carpeta /var/backup
+    command: "ls -l /var/backup"
+    register: dir_out
+
+  - name: Mostar los archivos de backup
+    ansible.builtin.debug:
+      var: "{{item}}"
+    with_items: dir_out.stdout_lines
+  
