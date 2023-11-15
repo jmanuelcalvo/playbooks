@@ -1,7 +1,7 @@
 ---
 - name: Aprovisionar ambiente productivo
   gather_facts: false
-  hosts: instance03
+  hosts: all
   vars:
     mysql_root_password: ABCde123.
     database: testdb
