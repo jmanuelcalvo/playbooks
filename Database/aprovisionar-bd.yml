@@ -3,25 +3,25 @@
   gather_facts: true
   hosts: all
   vars:
-    mysql_root_password:
-    database_name:
+    mysql_root_password: 
   tasks:
-  - name: Instalar el motor de Base de datos Mariadb
+  - name: instalar el motor de Base de datos Mariadb
     ansible.builtin.dnf:
-      name:
+      name: 
         - mariadb-server
         - python3-PyMySQL
+      state: latest 
     tags: instalar
 
   - name: Iniciar el servicio de BD
-    ansible.builtin.service:
+    service:
       name: mariadb
       enabled: true
       state: started
     tags: instalar
 
   - name: Asegurar la BD Root Password
-    community.mysql.mysql_user:
+    mysql_user:
       login_user: root
       login_password: "{{ mysql_root_password }}"
       user: root
@@ -30,35 +30,43 @@
       host: localhost
     tags: asegurar
 
-  - name: Asegurar la BD deshabilirar el root remoto
-    community.mysql.mysql_user:
-      check_implicit_admin: true
-      login_user: root
-      login_password: "{{ mysql_root_password }}"
-      user: root
-      host: "{{ ansible_fqdn }}"
-      state: absent
+#  - name: Asegurar la BD deshabilirar el root remoto
+#    mysql_user:
+#      check_implicit_admin: true
+#      login_user: root
+#      login_password: "{{ mysql_root_password }}"
+#      user: root
+#      host: "{{ ansible_fqdn }}"
+#      state: absent
+#    tags: asegurar
+
+  - name: Habiliar el puerto de MySQL en el firewall local
+    firewalld:
+      service: mysql
+      permanent: yes
+      immediate: true
+      state: enabled
     tags: asegurar
 
   - name: Crear una nueva BD
-    community.mysql.mysql_db:
-      name: "{{ database_name }}"
+    community.mysql.mysql_db: 
+      name: testdb
       state: present
       login_user: root
-      login_password: "{{ mysql_root_password }}"
+      login_password: "{{ mysql_root_password }}"  
     tags: aprovisionar
 
   - name: Copiar el dump de la base de datos
-    ansible.builtin.copy:
-      src: dump.sql
-      dest: /tmp/dump.sql
+    ansible.builtin.copy: 
+      src: dump.sql 
+      dest: /tmp/dump.sql  
     tags: aprovisionar
 
   - name: Importar dump de la base de datos
-    community.mysql.mysql_db:
-      name: "{{ database_name }}"
-      state: import
-      target: /tmp/dump.sql
-      login_user: root
+    community.mysql.mysql_db: 
+      name: testdb 
+      state: import 
+      target: /tmp/dump.sql 
+      login_user: root 
       login_password: "{{ mysql_root_password }}"
     tags: aprovisionar
