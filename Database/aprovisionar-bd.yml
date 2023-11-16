@@ -4,6 +4,7 @@
   hosts: all
   vars:
     mysql_root_password:
+    database_name:
   tasks:
   - name: Instalar el motor de Base de datos Mariadb
     ansible.builtin.dnf:
@@ -74,7 +75,7 @@
 
   - name: Importar dump de la base de datos
     community.mysql.mysql_db:
-      name: testdb
+      name: "{{ database_name }}"
       state: import
       target: /tmp/dump.sql
       login_user: root
