@@ -1,0 +1,22 @@
+---
+- name: Eliminar archivos de log si la partición /var está al {{ porcentaje }}%
+  hosts: all
+  gather_facts: false
+  vars:
+    porcentaje: 50
+  become: yes
+
+  tasks:
+    - name: Obtener el uso de la partición /var
+      shell: df --output=pcent /var | awk 'NR==2 {print substr($0,1,length($0)-1)}'
+      register: var_partition_usage
+
+    - name: Realizar copia de seguridad de la carpeta /var/log/httpd
+      community.general.archive:
+        path: /var/log/httpd
+        dest: /tmp/httpd.tgz
+      when: var_partition_usage.stdout|int >= porcentaje
+
+    - name: "Eliminar archivos de log si la partición está al {{ porcentaje }} o más"
+      command: find /var/log/httpd/ -type f -name "*_log-*" -delete
+      when: var_partition_usage.stdout|int >=  porcentaje
