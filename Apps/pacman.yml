@@ -8,6 +8,13 @@
       ansible.builtin.stat:
         path: /usr/sbin/httpd
       register: httpd_installed
+      
+    - name: Instalacion de paquetes necesarios
+      ansible.builtin.yum:
+        name:
+          - git
+          - vim-enhanced
+        state: present
 
     - name: Mostrar mensaje de error si httpd no está instalado
       ansible.builtin.debug:
