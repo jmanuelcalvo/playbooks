@@ -21,6 +21,9 @@
       ansible.builtin.debug:
         msg: "Error: El paquete httpd no está instalado en este servidor."
       when: httpd_installed.stat.exists == false
+    
+    - name: Red Hat selinux disable
+      ansible.builtin.command: setenforce 0
 
     - name: Clonar el repo de pacman en la ruta del servidor Web
       ansible.builtin.git:
