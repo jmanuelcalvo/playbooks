@@ -23,7 +23,4 @@
         var: folders_to_delete
 
     - name: Elimiar archivos
-      file:
-        path: "{{ item.path }}"
-        state: absent
-      with_items: "{{ folders_to_delete.files }}"
+      shell: rm -rf /var/log/httpd/*.log
