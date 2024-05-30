@@ -7,4 +7,4 @@
         path: /var/log/httpd/
         dest: /tmp/logs_comprimidos.tar.gz
         format: gz
-        exclude_paths: "*.log"
+        exclude_path: "*.log"
