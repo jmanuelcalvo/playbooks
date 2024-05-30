@@ -1,0 +1,10 @@
+---
+- name: Comprimir y mover archivos de logs en /var/log/httpd
+  hosts: all
+  tasks:
+    - name: Comprimir archivos de logs
+      archive:
+        path: /var/log/httpd/
+        dest: /tmp/logs_comprimidos.tar.gz
+        format: gz
+        exclude_paths: "*.log"
