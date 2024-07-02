@@ -1,0 +1,18 @@
+---
+- name: Crear usuarios en servidores Linux
+  hosts: servidores
+  become: yes
+  vars:
+    usuarios:
+      - nombre: usuario1
+        password: "ContraseñaSegura1"
+      - nombre: usuario2
+        password: "ContraseñaSegura2"
+        
+  tasks:
+    - name: Crear usuarios
+      user:
+        name: "{{ item.nombre }}"
+        password: "{{ item.password | password_hash('sha512') }}"
+        state: present
+      loop: "{{ usuarios }}"
