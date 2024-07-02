@@ -1,6 +1,6 @@
 ---
 - name: Crear usuarios en servidores Linux
-  hosts: servidores
+  hosts: all
   become: yes
   vars:
     usuarios:
