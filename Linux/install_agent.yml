@@ -1,0 +1,26 @@
+---
+- name: Alistamiento de una maquina virtual
+  hosts: all
+  tasks:
+    - name: Instalar el agente de zabbix
+      ansible.builtin.package:
+        name: zabbix-agent
+        state: present
+    - name: Inciar el servicio al iniciar la maquina
+      ansible.builtin.service:
+        name: zabbix-agent
+        state: started
+        enabled: true
+    - name: habilitar el puerto del firewall para zabbix
+      ansible.posix.firewalld:
+        port: 10050/tcp
+        permanent: true
+        state: enabled
+        immediate: true
+
+
+
+
+
+      
+
