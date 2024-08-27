@@ -81,3 +81,8 @@
       login_user: root
       login_password: "{{ mysql_root_password }}"
     tags: aprovisionar
+
+  - name: Deploy aws instance
+  
+  
+
