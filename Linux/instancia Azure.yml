@@ -2,6 +2,21 @@
 - name: Create a Linux VM in Azure
   hosts: localhost
   connection: local
+  vars: 
+    myResourceGroup: myResourceGroup
+    myVnetName: myVnet
+    mySubnetName: mySubnet
+    myVMName: myVM
+    myVMSize: Standard_D2s_v3
+    myPublicIPAddressName: myPublicIPAddress
+    myPrivateIPAddressName: myPrivateIPAddress
+    myPublicIPAddressType: Public
+    myPrivateIPAddressType: Private
+    myPublicIPAddressAllocationMethod: Dynamic
+    myPrivateIPAddressAllocationMethod: Static
+    myPublicIPAddressVersion: IPv4
+    myPrivateIPAddressVersion: IPv4
+
   tasks:
     - name: Create a resource group
       azure.azcollection.azure_rm_resourcegroup:
