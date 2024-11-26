@@ -1,0 +1,37 @@
+---
+- name: Chequear y limpiar memoria RAM en Linux y registrar ejecuciones
+  hosts: all
+  become: yes
+  vars:
+    threshold: 20  # Porcentaje de uso máximo permitido (modificable)
+    contador_file: /tmp/contador.txt  # Archivo para registrar el contador
+
+  tasks:
+    - name: Obtener uso de memoria
+      shell: free | awk '/^Mem:/ {print $3/$2 * 100.0}'
+      register: memory_usage
+      changed_when: false
+
+    - name: Mostrar uso de memoria
+      debug:
+        msg: "Uso actual de memoria: {{ memory_usage.stdout | float }}%"
+
+    - name: Crear archivo de contador si no existe
+      copy:
+        content: "0\n"
+        dest: "{{ contador_file }}"
+        force: no
+
+    - name: Limpiar caches si el uso supera el umbral
+      shell: echo 3 > /proc/sys/vm/drop_caches
+      when: memory_usage.stdout | float > threshold
+
+    - name: Incrementar el contador si se ejecuta la limpieza
+      shell: |
+        contador=$(cat {{ contador_file }})
+        echo $((contador + 1)) > {{ contador_file }}
+      when: memory_usage.stdout | float > threshold
+
+    - name: Mostrar cantidad de ejecuciones
+      debug:
+        msg: "El comando para liberar memoria ha sido ejecutado {{ lookup('file', contador_file) | int }} veces."
