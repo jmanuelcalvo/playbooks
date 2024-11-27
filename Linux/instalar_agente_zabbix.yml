@@ -1,0 +1,29 @@
+---
+- name: Instalar y configurar el agente de Zabbix
+  hosts: linux_servers
+  become: yes
+  tasks:
+    - name: Instalar el agente de Zabbix
+      package:
+        name: zabbix-agent
+        state: present
+
+    - name: Modificar el archivo de configuración de Zabbix
+      lineinfile:
+        path: /etc/zabbix/zabbix_agentd.conf
+        regexp: '^Server='
+        line: 'Server=192.168.0.5'
+        state: present
+      notify: Reiniciar Zabbix
+
+    - name: Habilitar y asegurar que el servicio de Zabbix esté iniciado
+      systemd:
+        name: zabbix-agent
+        enabled: true
+        state: started
+
+  handlers:
+    - name: Reiniciar Zabbix
+      systemd:
+        name: zabbix-agent
+        state: restarted
