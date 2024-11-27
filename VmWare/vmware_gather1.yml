@@ -1,16 +1,13 @@
 ---
-- name: Traer informacion del VmWare
-  hosts:  localhost
-  become: false
-  collections:
-    - community.vmware
-
+- name: Obtener información de máquinas virtuales en VMware
+  hosts: localhost
+  gather_facts: no
+  
   tasks:
-  - name: Gather only registered virtual machines
-    community.vmware.vmware_vm_info:
-      vm_type: vm
-    delegate_to: localhost
-    register: vm_info
+    - name: Obtener lista de máquinas virtuales y sus estados
+      community.vmware.vmware_vm_info:
+      register: vm_info
 
-  - debug:
-    var: vm_info.virtual_machines
+    - name: Mostrar información de las máquinas virtuales
+      debug:
+        var: vm_info.virtual_machines
