@@ -1,0 +1,16 @@
+---
+- name: Traer informacion del VmWare
+  hosts:  localhost
+  become: false
+  collections:
+    - community.vmware
+
+  tasks:
+  - name: Gather only registered virtual machines
+    community.vmware.vmware_vm_info:
+      vm_type: vm
+    delegate_to: localhost
+    register: vm_info
+
+  - debug:
+    var: vm_info.virtual_machines
