@@ -17,15 +17,17 @@
 
     - name: Formatear la salida en una tabla
       ansible.builtin.debug:
-        msg: |
-          {% set output = [] %}
+        msg: >
+          {% set header = "| Nombre de VM                   | Sistema Operativo                                     | Estado          |" %}
+          {% set separator = "|--------------------------------|------------------------------------------------------|-----------------|" %}
+          {% set rows = [] %}
           {% for vm in vm_info.virtual_machines %}
           {% set vm_name = vm.guest_name | default('N/A') %}
           {% set os_name = vm.guest_fullname | default('N/A') %}
           {% set state = vm.power_state | default('N/A') %}
-          {% set row = " | " + vm_name.ljust(30) + " | " + os_name.ljust(50) + " | " + state.ljust(15) + " | " %}
-          {% set _ = output.append(row) %}
+          {% set row = "| " + vm_name.ljust(30) + " | " + os_name.ljust(50) + " | " + state.ljust(15) + " |" %}
+          {% set _ = rows.append(row) %}
           {% endfor %}
-          | Nombre de VM                   | Sistema Operativo                                     | Estado          |
-          |--------------------------------|------------------------------------------------------|-----------------|
-          {{ output | join('\n') }}
+          {{ header }}
+          {{ separator }}
+          {{ rows | join('\n') }}
