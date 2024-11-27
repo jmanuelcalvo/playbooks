@@ -20,10 +20,12 @@
         msg: |
           {% set output = [] %}
           {% for vm in vm_info.virtual_machines %}
-          {% set row = " | " + vm.guest_name.ljust(30) + " | " + vm.guest_full_name.ljust(50) + " | " + vm.power_state.ljust(15) + " | " %}
+          {% set vm_name = vm.guest_name | default('N/A') %}
+          {% set os_name = vm.guest_fullname | default('N/A') %}
+          {% set state = vm.power_state | default('N/A') %}
+          {% set row = " | " + vm_name.ljust(30) + " | " + os_name.ljust(50) + " | " + state.ljust(15) + " | " %}
           {% set _ = output.append(row) %}
           {% endfor %}
           | Nombre de VM                   | Sistema Operativo                                     | Estado          |
           |--------------------------------|------------------------------------------------------|-----------------|
           {{ output | join('\n') }}
-
