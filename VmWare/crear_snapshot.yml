@@ -1,0 +1,24 @@
+---
+- name: Crear un snapshot de una máquina virtual en VMware
+  hosts: localhost
+  gather_facts: no
+  vars:
+    vm_name: "ServidorPrueba"
+    snapshot_name: "BackupAntesActualizacion"
+    description: "Snapshot previo a la actualización del sistema"
+
+  tasks:
+    - name: Obtener lista de snapshots
+      community.vmware.vmware_vm_snapshot_info:
+      register: snapshot_info
+
+    - name: Mostrar información de snapshots
+      debug:
+        var: snapshot_info.virtual_machines
+
+    - name: Tomar snapshot
+      community.vmware.vmware_guest_snapshot:
+        name: "{{ vm_name }}"
+        state: present
+        snapshot_name: "{{ snapshot_name }}"
+        description: "{{ description }}"
