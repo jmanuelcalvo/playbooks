@@ -2,6 +2,10 @@
 - name: Obtener información de máquinas virtuales en VMware
   hosts: localhost
   gather_facts: no
+  vars:
+    vm_folder: "/SDDC-Datacenter/vm/Workloads/sandbox-2jbkj"
+    
+
   
   tasks:
     - name: Obtener lista de máquinas virtuales y sus estados
