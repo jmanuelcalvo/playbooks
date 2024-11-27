@@ -26,12 +26,12 @@
       shell: echo 3 > /proc/sys/vm/drop_caches
       when: memory_usage.stdout | float > threshold
 
-#    - name: Incrementar el contador si se ejecuta la limpieza
-#      shell: |
-#        contador=$(cat {{ contador_file }})
-#        echo $((contador + 1)) > {{ contador_file }}
-#      when: memory_usage.stdout | float > threshold
+    - name: Incrementar el contador si se ejecuta la limpieza
+      shell: |
+        contador=$(cat {{ contador_file }})
+        echo $((contador + 1)) > {{ contador_file }}
+      when: memory_usage.stdout | float > threshold
 
-    - name: Mostrar cantidad de ejecuciones
-      debug:
-        msg: "El comando para liberar memoria ha sido ejecutado {{ lookup('file', contador_file) | int }} veces."
+#    - name: Mostrar cantidad de ejecuciones
+#      debug:
+#        msg: "El comando para liberar memoria ha sido ejecutado {{ lookup('file', contador_file) | int }} veces."
