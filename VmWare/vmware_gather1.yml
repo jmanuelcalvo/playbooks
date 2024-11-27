@@ -14,3 +14,16 @@
     - name: Mostrar información de las máquinas virtuales
       debug:
         var: vm_info.virtual_machines
+
+    - name: Formatear la salida en una tabla
+      ansible.builtin.debug:
+        msg: |
+          {% set output = [] %}
+          {% for vm in vm_info.virtual_machines %}
+          {% set row = " | " + vm.guest_name.ljust(30) + " | " + vm.guest_full_name.ljust(50) + " | " + vm.power_state.ljust(15) + " | " %}
+          {% set _ = output.append(row) %}
+          {% endfor %}
+          | Nombre de VM                   | Sistema Operativo                                     | Estado          |
+          |--------------------------------|------------------------------------------------------|-----------------|
+          {{ output | join('\n') }}
+
