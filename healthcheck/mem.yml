@@ -1,16 +1,11 @@
 ---
-  - name: Validacion de espacio en disco
-    gather_facts: yes
-    hosts: all
-    tasks:
-    - name: Check /tmp freespace
-      shell: df /tmp --output\=avail | tail -1
-      register: tmp_freespace
-        
-    - fail:
-        msg: /tmp no tiene el espacio mínimo requerido para continuar 9Gb solicitados)
-      #when: tmp_freespace.stdout|float is lt 3000000
-      when: tmp_freespace.stdout|float is lt 7533036
-    - name: Check linux memory
-      ansible.builtin.shell: free -m | grep Swap | awk '{print $2}'
-      register: memcapture_current
+- hosts: all
+  gather_facts: yes
+  tasks:
+    - name: Obtener información sobre la memoria usando el comando free
+      command: "free -m"
+      register: resultado_free
+
+    - name: Mostrar información sobre la memoria
+      debug:
+        var: resultado_free.stdout_lines

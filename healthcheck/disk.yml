@@ -1,0 +1,27 @@
+---
+- name: Validacion de espacio en disco
+  gather_facts: true
+  hosts: all
+  vars:
+    disco: /tmp
+
+  tasks:
+    - name: "Chequear el espacio disponible del {{ disco }}"
+      ansible.builtin.shell: df {{ disco }} --output\=avail | tail -1
+      register: tmp_freespace
+
+    - name: Dividir el tamaño del disco en 1024 para obtener en valor en G
+      ansible.builtin.set_fact:
+        tasa_uso_disk: "{{ (tmp_freespace.stdout|int / 1024) | round|int }} MB"
+
+    - name: Mostrar el tamaño disponble de la particion {{ disco }} en el servidor {{ ansible_hostname}}
+      ansible.builtin.debug:
+        msg: "El Tamaño disponible de la particion {{ disco }} en el servidor {{ ansible_hostname }} es {{ tasa_uso_disk }} "
+
+    - name: Validar fallos
+      ansible.builtin.fail:
+        msg: "{{ disco }} no tiene el espacio mínimo requerido para continuar 3000000"
+      when: tmp_freespace.stdout|float is lt 3000000
+  #    - fail:
+  #        msg: /tmp no tiene el espacio mínimo requerido para continuar 9Gb solicitados)
+  #        when: tmp_freespace.stdout|float is lt 6476196
