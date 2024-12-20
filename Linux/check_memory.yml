@@ -8,40 +8,36 @@
 
   tasks:
     - name: Obtener uso de memoria
-      shell: free | awk '/^Mem:/ {print $3/$2 * 100.0}'
+      ansible.builtin.shell: free | awk '/^Mem:/ {print $3/$2 * 100.0}'
       register: memory_usage
       changed_when: false
 
     - name: Mostrar uso de memoria
-      debug:
+      ansible.builtin.debug:
         msg: "Uso actual de memoria: {{ memory_usage.stdout | float }}%"
 
     - name: Crear archivo de contador si no existe
-      copy:
+      ansible.builtin.copy:
         content: "0\n"
         dest: "{{ contador_file }}"
         force: no
 
     - name: Limpiar caches si el uso supera el umbral
-      shell: echo 3 > /proc/sys/vm/drop_caches
+      ansible.builtin.shell: echo 3 > /proc/sys/vm/drop_caches
       when: memory_usage.stdout | float > threshold
 
     - name: Incrementar el contador si se ejecuta la limpieza
-      shell: |
+      ansible.builtin.shell: |
         contador=$(cat {{ contador_file }})
         echo $((contador + 1)) > {{ contador_file }}
       when: memory_usage.stdout | float > threshold
 
-#    - name: Mostrar cantidad de ejecuciones
-#      debug:
-#        msg: "El comando para liberar memoria ha sido ejecutado {{ lookup('file', contador_file) | int }} veces."
-
     - name: Leer archivo de contador desde el nodo remoto
-      slurp:
+      ansible.builtin.slurp:
         src: /tmp/contador.txt
       register: contador_content
 
     - name: Mostrar cantidad de ejecuciones
-      debug:
+      ansible.builtin.debug:
         msg: "El comando para liberar memoria ha sido ejecutado {{ contador_content['content'] | b64decode | int }} veces."
   
