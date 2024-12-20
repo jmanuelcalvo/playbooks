@@ -32,6 +32,6 @@
         echo $((contador + 1)) > {{ contador_file }}
       when: memory_usage.stdout | float > threshold
 
-#    - name: Mostrar cantidad de ejecuciones
-#      debug:
-#        msg: "El comando para liberar memoria ha sido ejecutado {{ lookup('file', contador_file) | int }} veces."
+    - name: Mostrar cantidad de ejecuciones
+      debug:
+        msg: "El comando para liberar memoria ha sido ejecutado {{ lookup('file', contador_file) | int }} veces."
