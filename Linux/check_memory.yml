@@ -32,6 +32,16 @@
         echo $((contador + 1)) > {{ contador_file }}
       when: memory_usage.stdout | float > threshold
 
+#    - name: Mostrar cantidad de ejecuciones
+#      debug:
+#        msg: "El comando para liberar memoria ha sido ejecutado {{ lookup('file', contador_file) | int }} veces."
+
+    - name: Leer archivo de contador desde el nodo remoto
+      slurp:
+        src: /tmp/contador.txt
+      register: contador_content
+
     - name: Mostrar cantidad de ejecuciones
       debug:
-        msg: "El comando para liberar memoria ha sido ejecutado {{ lookup('file', contador_file) | int }} veces."
+        msg: "El comando para liberar memoria ha sido ejecutado {{ contador_content['content'] | b64decode | int }} veces."
+  
