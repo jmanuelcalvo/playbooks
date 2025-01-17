@@ -1,0 +1,19 @@
+---
+- name: Levantar inventario de software instalado en máquinas Windows
+  hosts: all
+  tasks:
+    - name: Obtener lista de software instalado
+      win_shell: |
+        Get-ItemProperty HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* |
+        Select-Object DisplayName, DisplayVersion, Publisher, InstallDate |
+        ConvertTo-Json -Depth 3
+      register: software_list
+
+    - name: Guardar la lista de software en un archivo local
+      copy:
+        content: "{{ software_list.stdout }}"
+        dest: "./software_installed_{{ inventory_hostname }}.json"
+
+    - name: Mostrar la lista de software en la salida
+      debug:
+        msg: "{{ software_list.stdout | from_json }}"
