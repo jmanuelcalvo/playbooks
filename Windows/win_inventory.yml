@@ -1,19 +1,44 @@
 ---
-- name: Levantar inventario de software instalado en máquinas Windows
+- name: Inventario y control de software instalado usando winget
   hosts: all
+  vars:
+    software_permitido:
+      - Google Chrome
+      - Microsoft Office
+      - Notepad++
+      - Adobe Acrobat Reader
+
   tasks:
-    - name: Obtener lista de software instalado
+    - name: Verificar si winget está instalado
       win_shell: |
-        Get-ItemProperty HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* |
-        Select-Object DisplayName, DisplayVersion, Publisher, InstallDate |
-        ConvertTo-Json -Depth 3
+        winget --version
+      register: winget_check
+      failed_when: winget_check.rc != 0
+      changed_when: false
+
+    - name: Obtener lista de paquetes instalados con winget
+      win_shell: |
+        winget list --source winget |
+        ForEach-Object { ($_ -split '\s{2,}')[0] } |
+        ConvertTo-Json -Depth 1
       register: software_list
 
-    - name: Guardar la lista de software en un archivo local
-      copy:
-        content: "{{ software_list.stdout }}"
-        dest: "./software_installed_{{ inventory_hostname }}.json"
+    - name: Convertir lista de software a JSON
+      set_fact:
+        software_instalado: "{{ software_list.stdout | from_json }}"
 
-    - name: Mostrar la lista de software en la salida
+    - name: Filtrar software no permitido
+      set_fact:
+        software_no_permitido: >-
+          {{ software_instalado | difference(software_permitido) | list }}
+
+    - name: Mostrar alerta si hay software no permitido
       debug:
-        msg: "{{ software_list.stdout | from_json }}"
+        msg: "Se encontró software no permitido: {{ software_no_permitido }}"
+      when: software_no_permitido | length > 0
+
+#    - name: Desinstalar software no permitido
+#      win_shell: |
+#        winget uninstall "{{ item }}" --silent
+#      with_items: "{{ software_no_permitido }}"
+#      when: software_no_permitido | length > 0
