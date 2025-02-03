@@ -6,7 +6,7 @@
   tasks:
   - name: Gather information of Virtual Machine
     community.vmware.vmware_guest_info:
-      datacenter: SDDC-Datacenter
+      datacenter: "{{ datacenter }}"
       name: "{{ nombre }}"
     delegate_to: localhost
     register: vm_info
