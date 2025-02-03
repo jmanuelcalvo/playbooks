@@ -9,6 +9,7 @@
       datacenter: "{{ datacenter }}"
       name: "{{ nombre }}"
     delegate_to: localhost
+    validate_certs: no
     register: vm_info
 
   - name: Salida de la creacion de maquina virtual
