@@ -1,0 +1,136 @@
+---
+- name: Revisión general de salud en sistemas Linux
+  hosts: all
+  gather_facts: yes
+  become: true
+
+  vars:
+    servicios_a_validar:
+      - sshd
+      - chronyd
+    puertos_a_validar:
+      - { nombre: "SSH", puerto: 22 }
+      - { nombre: "HTTPS", puerto: 443 }
+    procesos_interes:
+      - sshd
+      - tuned
+    sitio_http_prueba: http://www.redhat.com
+
+  tasks:
+
+    - name: Uso de CPU
+      shell: top -bn1 | grep 'Cpu(s)' | awk '{print $2}'
+      register: uso_cpu
+      changed_when: false
+
+    - name: Uso de RAM
+      shell: free | awk '/Mem:/ {printf "%.2f", $3/$2 * 100}'
+      register: uso_ram
+      changed_when: false
+
+    - name: Espacio en disco raíz (/)
+      shell: df -h --output=pcent / | awk 'NR==2 {print $1}'
+      register: espacio_disco
+      changed_when: false
+
+    - name: Espacio en otras particiones (/var, /tmp, /home)
+      shell: df -h /var /tmp /home || true
+      register: espacio_otros
+      changed_when: false
+
+    - name: Cantidad de procesos definidos
+      shell: ps aux | grep -E "{{ procesos_interes | join('|') }}" | grep -v grep | wc -l
+      register: cantidad_procesos
+      changed_when: false
+
+    - name: Validar estado de servicios críticos
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        state: started
+      with_items: "{{ servicios_a_validar }}"
+      register: estado_servicios
+
+    - name: Validar puertos abiertos
+      shell: ss -tuln | grep ":{{ item.puerto }}"
+      with_items: "{{ puertos_a_validar }}"
+      register: estado_puertos
+      ignore_errors: true
+      changed_when: false
+
+    - name: Usuarios conectados actualmente
+      shell: who | awk '{print $1}' | sort | uniq
+      register: usuarios_conectados
+      changed_when: false
+
+    - name: Estado de conexión con Satellite
+      shell: subscription-manager status
+      register: estado_satellite
+      failed_when: "'Overall Status: Current' not in estado_satellite.stdout"
+      changed_when: false
+      ignore_errors: true
+
+    - name: Último reinicio del sistema
+      shell: who -b | awk '{print $3, $4}'
+      register: ultimo_reinicio
+      changed_when: false
+
+    - name: Revisión de logs críticos recientes (resumen)
+      shell: |
+        journalctl -p 3 -n 5 --no-pager | awk '{print $1, $2, $3, $6, substr($0, index($0,$7))}' | cut -c1-100
+      register: logs_criticos
+      changed_when: false
+      ignore_errors: true
+
+    - name: Contar paquetes con actualizaciones de seguridad disponibles
+      shell: yum updateinfo list security all | grep -v '^$' | grep -c 'RHSA'
+      register: actualizaciones_seguridad
+      changed_when: false
+
+    - name: Contar paquetes con actualizaciones generales disponibles
+      shell: yum check-update | grep -v '^$' | grep -v '^Obsoleting Packages' | wc -l
+      register: actualizaciones_generales
+      changed_when: false
+
+    - name: Estado de SELinux
+      shell: getenforce
+      register: estado_selinux
+      changed_when: false
+
+    - name: Prueba de conexión ICMP (ping a 8.8.8.8)
+      shell: ping -c 3 8.8.8.8
+      register: respuesta_ping
+      failed_when: respuesta_ping.rc != 0
+      changed_when: false
+      ignore_errors: true
+
+    - name: Prueba de conexión HTTP externa
+      uri:
+        url: "{{ sitio_http_prueba }}"
+        method: GET
+        return_content: no
+      register: respuesta_http
+      ignore_errors: true
+
+    - name: Definir si requiere atención según actualizaciones de seguridad
+      set_fact:
+        needs_attention: "{{ (actualizaciones_seguridad.stdout | int) > 0 }}"
+
+    - name: Mostrar resumen del chequeo de salud
+      debug:
+        msg:
+          - "Fecha de ejecución: {{ ansible_date_time.date }} {{ ansible_date_time.time }}"
+          - "Uso de CPU: {{ uso_cpu.stdout }}%"
+          - "Uso de RAM: {{ uso_ram.stdout }}%"
+          - "Espacio en disco (/): {{ espacio_disco.stdout }}"
+          - "Espacio en otras particiones:\n{{ espacio_otros.stdout }}"
+          - "Cantidad de procesos activos de interés: {{ cantidad_procesos.stdout }}"
+          - "Usuarios conectados: {{ usuarios_conectados.stdout_lines | join(', ') }}"
+          - "Estado de Satellite: {{ estado_satellite.stdout | default('No disponible') }}"
+          - "Último reinicio: {{ ultimo_reinicio.stdout }}"
+          - "Estado de SELinux: {{ estado_selinux.stdout }}"
+          - "Logs críticos recientes:\n{{ logs_criticos.stdout_lines | default(['Sin registros']) | join('\n') }}"
+          - "Cantidad de actualizaciones de seguridad: {{ actualizaciones_seguridad.stdout | default('0') }}"
+          - "Cantidad de actualizaciones generales: {{ actualizaciones_generales.stdout | default('0') }}"
+          - "Respuesta a ping (8.8.8.8): {{ respuesta_ping.stdout_lines | default([]) | join('\n') }}"
+          - "Respuesta HTTP externa: Código {{ respuesta_http.status | default('Error') }}"
+          - "¿Requiere atención? {{ 'Sí' if needs_attention else 'No' }}"
