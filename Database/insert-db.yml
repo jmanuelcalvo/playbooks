@@ -6,18 +6,17 @@
     mysql_root_password: ABCde123.
     database: testdb
   tasks:
+    - name: Run several insert queries against db test_db in single transaction
+      community.mysql.mysql_query:
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+        login_db: "{{ database }}"
+        query:
+          - INSERT INTO `customers` VALUES (1,'Jose Manuel','CAlv','jcalvo@abc.com','444','444','2020-09-15 18:34:09','2020-09-15 18:34:09','1')
+        single_transaction: true
+      register: r_query
 
-  - name: Run several insert queries against db test_db in single transaction
-    community.mysql.mysql_query:
-      login_user: root
-      login_password: "{{ mysql_root_password }}"
-      login_db: "{{ database }}"
-      query:
-      - INSERT INTO `customers` VALUES (1,'Jose Manuel','CAlv','jcalvo@abc.com','444','444','2020-09-15 18:34:09','2020-09-15 18:34:09','1')
-      single_transaction: true
-    register: r_query
-
-  - name: what happened
-    ansible.builtin.debug:
+    - name: what happened
+      ansible.builtin.debug:
       #msg: "{{ r_query.query_result }}"
-      msg: "{{ r_query }}"
+        msg: "{{ r_query }}"

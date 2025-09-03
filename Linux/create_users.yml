@@ -1,14 +1,14 @@
 ---
 - name: Crear usuarios en servidores Linux
   hosts: all
-  become: yes
+  become: true
   vars:
     usuarios:
       - nombre: usuario1
-        password: "ContraseñaSegura1"
+        password: ContraseñaSegura1
       - nombre: usuario2
-        password: "ContraseñaSegura2"
-        
+        password: ContraseñaSegura2
+
   tasks:
     - name: Crear usuarios
       user:
