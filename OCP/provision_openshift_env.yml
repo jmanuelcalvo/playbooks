@@ -1,0 +1,53 @@
+---
+- name: Aprovisionar Entorno de Demo en OpenShift
+  hosts: localhost
+  connection: local
+  tasks:
+    - name: Crear Namespace para la Demo
+      kubernetes.core.k8s:
+        name: demo-autocura
+        api_version: v1
+        kind: Namespace
+        state: present
+
+    - name: Desplegar Aplicación Web Crítica
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: web-critica
+            namespace: demo-autocura
+          spec:
+            replicas: 3
+            selector:
+              matchLabels:
+                app: web
+            template:
+              metadata:
+                labels:
+                  app: web
+              spec:
+                containers:
+                - name: nginx
+                  image: nginxinc/nginx-unprivileged:latest
+                  ports:
+                    - containerPort: 8080
+
+    - name: Crear Servicio para la Aplicación
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: web-service
+            namespace: demo-autocura
+          spec:
+            selector:
+              app: web
+            ports:
+              - protocol: TCP
+                port: 80
+                targetPort: 8080
