@@ -4,14 +4,19 @@
   connection: local
   tasks:
     - name: Crear Namespace para la Demo
-      kubernetes.core.k8s:
-        name: demo-autocura
-        api_version: v1
-        kind: Namespace
+      redhat.openshift.k8s: # Cambiado de kubernetes.core a redhat.openshift
+        api_key: "{{ query('ansible.builtin.env', 'K8S_AUTH_API_KEY') | default(omit) }}"
+        host: "{{ query('ansible.builtin.env', 'K8S_AUTH_HOST') | default(omit) }}"
+        verify_ssl: false # Útil si usas certificados auto-firmados en la demo
+        definition:
+          apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: demo-autocura
         state: present
 
     - name: Desplegar Aplicación Web Crítica
-      kubernetes.core.k8s:
+      redhat.openshift.k8s:
         state: present
         definition:
           apiVersion: apps/v1
@@ -32,22 +37,3 @@
                 containers:
                 - name: nginx
                   image: nginxinc/nginx-unprivileged:latest
-                  ports:
-                    - containerPort: 8080
-
-    - name: Crear Servicio para la Aplicación
-      kubernetes.core.k8s:
-        state: present
-        definition:
-          apiVersion: v1
-          kind: Service
-          metadata:
-            name: web-service
-            namespace: demo-autocura
-          spec:
-            selector:
-              app: web
-            ports:
-              - protocol: TCP
-                port: 80
-                targetPort: 8080
