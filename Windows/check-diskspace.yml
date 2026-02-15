@@ -8,15 +8,14 @@
 
   tasks:
     - name: "Comprobar espacio libre en {{ disk }}:"
-      win_shell: "write-host ([math]::Round((Get-PSDrive {{ disk }} | Select-Object Free).free / 1024 / 1024 / 1024,2))"
+      win_shell: write-host ([math]::Round((Get-PSDrive {{ disk }} | Select-Object Free).free / 1024 / 1024 / 1024,2))
       register: freespace
 
     - name: informe de espacio libre en disco
       debug:
         msg: "El espacio disponible del discpo {{ disk }}: es {{ freespace.stdout }} GB"
 
-
-    - name: "Fallar si no hay espacio suficiente"
+    - name: Fallar si no hay espacio suficiente
       fail:
-        msg: "La maquina {{inventory_hostname}} tiene menos de {{ disksize }} GB disponibles"
-      when: "freespace.stdout | int is lt disksize"
+        msg: La maquina {{inventory_hostname}} tiene menos de {{ disksize }} GB disponibles
+      when: freespace.stdout | int is lt disksize

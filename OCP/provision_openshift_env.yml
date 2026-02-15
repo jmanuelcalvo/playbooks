@@ -32,7 +32,7 @@
                   app: web
               spec:
                 containers:
-                - name: nginx
-                  image: nginxinc/nginx-unprivileged:latest
-                  ports:
-                    - containerPort: 8080
+                  - name: nginx
+                    image: nginxinc/nginx-unprivileged:latest
+                    ports:
+                      - containerPort: 8080

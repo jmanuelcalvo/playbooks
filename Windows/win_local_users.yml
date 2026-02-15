@@ -10,16 +10,16 @@
         name: LocalGroup
         description: Allow access to C:\Development folder
 
-    - name:  Crear usuario local
+    - name: Crear usuario local
       ansible.windows.win_user:
-        name: '{{ item.name }}'
-        password: '{{ item.password }}'
+        name: "{{ item.name }}"
+        password: "{{ item.password }}"
         groups: "{{ grupo }}"
         update_password: on_create
-        password_never_expires: yes
+        password_never_expires: true
       loop:
-      - name: ansible01
-        password: Password123.
+        - name: ansible01
+          password: Password123.
 
     - name: Crear carpeta C:\Development
       ansible.windows.win_file:

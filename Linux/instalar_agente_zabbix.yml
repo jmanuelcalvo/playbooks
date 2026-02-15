@@ -1,7 +1,7 @@
 ---
 - name: Instalar y configurar el agente de Zabbix
   hosts: linux_servers
-  become: yes
+  become: true
   tasks:
     - name: Instalar el agente de Zabbix
       package:
@@ -11,8 +11,8 @@
     - name: Modificar el archivo de configuración de Zabbix
       lineinfile:
         path: /etc/zabbix/zabbix_agentd.conf
-        regexp: '^Server='
-        line: 'Server=192.168.0.5'
+        regexp: ^Server=
+        line: Server=192.168.0.5
         state: present
       notify: Reiniciar Zabbix
 
