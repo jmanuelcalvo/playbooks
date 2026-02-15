@@ -10,24 +10,24 @@
     - name: Install Cisco AnyConnect VPN client
       win_package:
         path: C:\Temp\anyconnect-installer.exe
-        product_id: "{Product-ID-from-AnyConnect}"  # Puedes buscar este ID si es necesario
-        arguments: '/silent /install'
+        product_id: "{Product-ID-from-AnyConnect}" # Puedes buscar este ID si es necesario
+        arguments: /silent /install
         state: present
-        creates_path: 'C:\Program Files (x86)\Cisco\Cisco AnyConnect Secure Mobility Client\vpnui.exe'
+        creates_path: C:\Program Files (x86)\Cisco\Cisco AnyConnect Secure Mobility Client\vpnui.exe
 
     - name: Create Cisco AnyConnect profile directory
       win_file:
-        path: 'C:\ProgramData\Cisco\Cisco AnyConnect Secure Mobility Client\Profile'
+        path: C:\ProgramData\Cisco\Cisco AnyConnect Secure Mobility Client\Profile
         state: directory
 
     - name: Deploy VPN profile configuration
       win_copy:
         src: /path/to/anyconnect-profile.xml
-        dest: 'C:\ProgramData\Cisco\Cisco AnyConnect Secure Mobility Client\Profile\vpn_profile.xml'
+        dest: C:\ProgramData\Cisco\Cisco AnyConnect Secure Mobility Client\Profile\vpn_profile.xml
 
     - name: Ensure Cisco AnyConnect service is running
       win_service:
-        name: 'vpnagent'
+        name: vpnagent
         state: started
         start_mode: auto
 

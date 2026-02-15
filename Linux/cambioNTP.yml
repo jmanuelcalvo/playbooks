@@ -1,27 +1,26 @@
 ---
 - name: Cambiar servidores NTP en servidores RHEL
   hosts: all
-  
+
   tasks:
+    - name: Validar la hora previa a la actualizacion del servidor
+      ansible.builtin.command: date
 
-  - name: Validar la hora previa a la actualizacion del servidor
-    ansible.builtin.command: date
-  
-  - name: Crear backup de archivo NTP
-    ansible.builtin.copy:
-      src: /etc/chronyd.conf
-      dest: /etc/chronyd.conf.ntp
+    - name: Crear backup de archivo NTP
+      ansible.builtin.copy:
+        src: /etc/chronyd.conf
+        dest: /etc/chronyd.conf.ntp
 
-  - name: Reemplazar linea de servidor NTP
-    ansible.builtin.lineinfile:
-      path: /etc/chronyd.conf
-      regexp: '^server='
-      line: server=192.168.78.7 iburts
+    - name: Reemplazar linea de servidor NTP
+      ansible.builtin.lineinfile:
+        path: /etc/chronyd.conf
+        regexp: ^server=
+        line: server=192.168.78.7 iburts
 
-  - name: reiniciar los servicios de Chronyd
-    ansible.builtin.service:
-      name: chronyd
-      state: restarted
+    - name: reiniciar los servicios de Chronyd
+      ansible.builtin.service:
+        name: chronyd
+        state: restarted
 
-  - name: Validar la hora posterior a la actualizacion del servidor
-    ansible.builtin.command: date
+    - name: Validar la hora posterior a la actualizacion del servidor
+      ansible.builtin.command: date

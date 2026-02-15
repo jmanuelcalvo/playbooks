@@ -6,7 +6,7 @@
     disco: /tmp
 
   tasks:
-    - name: "Chequear el espacio disponible del {{ disco }}"
+    - name: Chequear el espacio disponible del {{ disco }}
       ansible.builtin.shell: df {{ disco }} --output\=avail | tail -1
       register: tmp_freespace
 

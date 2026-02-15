@@ -1,18 +1,18 @@
 ---
 - name: Traer informacion del VmWare
-  hosts:  localhost
+  hosts: localhost
   become: false
   collections:
     - community.vmware
 
   tasks:
-  - name: Gather all registered virtual machines
-    community.vmware.vmware_vm_info:
-      folder: "{{ sandbox }}"
+    - name: Gather all registered virtual machines
+      community.vmware.vmware_vm_info:
+        folder: "{{ sandbox }}"
       #folder: /SDDC-Datacenter/Workloads/sandbox-nqvrg/
       #folder: "Workloads/{{ sandbox }}"
-    delegate_to: localhost
-    register: vminfo
+      delegate_to: localhost
+      register: vminfo
 
-  - debug:
-      var: vminfo.virtual_machines
+    - debug:
+        var: vminfo.virtual_machines
