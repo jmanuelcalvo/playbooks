@@ -4,7 +4,7 @@
   gather_facts: false
   vars:
     porcentaje: 50
-  become: yes
+  become: true
 
   tasks:
     - name: Obtener el uso de la partición /var
@@ -17,6 +17,6 @@
         dest: /tmp/httpd.tgz
       when: var_partition_usage.stdout|int >= porcentaje
 
-    - name: "Eliminar archivos de log si la partición está al {{ porcentaje }} o más"
+    - name: Eliminar archivos de log si la partición está al {{ porcentaje }} o más
       command: find /var/log/httpd/ -type f -name "*_log-*" -delete
       when: var_partition_usage.stdout|int >=  porcentaje

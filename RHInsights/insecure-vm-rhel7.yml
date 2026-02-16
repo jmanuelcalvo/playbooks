@@ -1,50 +1,49 @@
 ---
 - name: Des asegurar un sistema operativo para pruebas de compliance
   hosts: all
-  gather_facts: yes
+  gather_facts: true
   tasks:
+    - name: Disable auditd Service
+      command: service auditd stop
 
-  - name: Disable auditd Service
-    command: service auditd stop
+    - name: Prevent Login to Accounts With Empty Password
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: ^#PermitEmptyPasswords
+        line: PermitEmptyPasswords yes
 
-  - name: Prevent Login to Accounts With Empty Password
-    lineinfile:
-      path: /etc/ssh/sshd_config
-      regexp: '^#PermitEmptyPasswords'
-      line: PermitEmptyPasswords yes
+    - name: Reiniciar sshd
+      service:
+        name: sshd
+        state: restarted
 
-  - name: Reiniciar sshd
-    service:
-      name: sshd
-      state: restarted
+    - name: Cambio de permisos
+      command: chown nobody /etc/group
 
-  - name: Cambio de permisos
-    command: chown nobody /etc/group
+    - name: Cambio de permisos
+      command: chown nobody /boot/grub2/grub.cfg
 
-  - name: Cambio de permisos
-    command: chown nobody /boot/grub2/grub.cfg
+    - name: Instalar telnet service
+      yum:
+        name: telnet-server
+        state: latest
 
-  - name: Instalar telnet service
-    yum:
-      name: telnet-server
-      state: latest
+    - name: Enable telnet server
+      service:
+        name: telnet.socket
+        state: started
+        enabled: true
 
-  - name: Enable telnet server
-    service:
-      name: telnet.socket
-      state: started
-      enabled: yes
+    - name: Instalar paquetes del servicio rsh
+      yum:
+        name: "{{ packages }}"
+      vars:
+        packages:
+          - rsh
+          - rsh-server
 
-  - name: Instalar paquetes del servicio rsh
-    yum:
-      name: "{{ packages }}"
-    vars:
-      packages:
-      - rsh
-      - rsh-server
-
-  - name: Enable RSH server
-    service:
-      name: rsh.socket
-      state: started
-      enabled: yes
+    - name: Enable RSH server
+      service:
+        name: rsh.socket
+        state: started
+        enabled: true

@@ -2,7 +2,7 @@
 - name: Create a Linux VM in Azure
   hosts: localhost
   connection: local
-  vars: 
+  vars:
     myResourceGroup: myResourceGroup
     myVnetName: myVnet
     mySubnetName: mySubnet

@@ -1,3 +1,4 @@
+---
 - hosts: localhost
   connection: local
   gather_facts: false
@@ -5,29 +6,27 @@
     - community.vmware
   tasks:
     - vmware_guest:
-        validate_certs: False
-        name: "{{ nombre }}"                                  # Nombre de VM y de como se visualizará en el vCenter
-        template: '{{ plantilla }}'                           # Nombre de la Plantilla en el vCenter
-        datacenter: SDDC-Datacenter                           # Nombre del Datacenter donde se va a desplegar
-        cluster: Cluster-1                                    # Nombre del Cluster donde se va a desplegar
-        folder: "Workloads/{{ sandbox }}"                     # Nombre del folder donde se va a desplegar
-        annotation: 'Servidor desplegado desde Ansible'       # Nota que se quiera colocar en el Servidor desplegado
+        validate_certs: false
+        name: "{{ nombre }}" # Nombre de VM y de como se visualizará en el vCenter
+        template: "{{ plantilla }}" # Nombre de la Plantilla en el vCenter
+        datacenter: SDDC-Datacenter # Nombre del Datacenter donde se va a desplegar
+        cluster: Cluster-1 # Nombre del Cluster donde se va a desplegar
+        folder: Workloads/{{ sandbox }} # Nombre del folder donde se va a desplegar
+        annotation: Servidor desplegado desde Ansible # Nota que se quiera colocar en el Servidor desplegado
         disk:
-        - size_gb: '{{ sodisk }}'                             # Tamaño a asignar al disco del Sistema Operativo
-          type: thin                                          # Formato del disco thin, thick o eagerzeroedthick 
-          datastore: 'WorkloadDatastore'                      # Nombre del Datastore donde se va a desplegar
+          - size_gb: "{{ sodisk }}" # Tamaño a asignar al disco del Sistema Operativo
+            type: thin # Formato del disco thin, thick o eagerzeroedthick 
+            datastore: WorkloadDatastore # Nombre del Datastore donde se va a desplegar
         hardware:
-          memory_mb: '{{ soram }}'                            # Cantidad de Memoria RAM a asignar
-          num_cpus: '{{ socpu }}'                             # Cantidad de CPUs a asignar
-          scsi: paravirtual                                   # Formato de conector de disco atavez de VMware  
-        networks:                                             # Configuracion de RED   
-        - name: 'segment-{{ sandbox }}'                       # Nombre de la Red a asignar
+          memory_mb: "{{ soram }}" # Cantidad de Memoria RAM a asignar
+          num_cpus: "{{ socpu }}" # Cantidad de CPUs a asignar
+          scsi: paravirtual # Formato de conector de disco atavez de VMware  
+        networks: # Configuracion de RED   
+          - name: segment-{{ sandbox }} # Nombre de la Red a asignar
         wait_for_ip_address: false
-        state: poweredon                                      # Estado del Servidor luego del despliegue
+        state: poweredon # Estado del Servidor luego del despliegue
       register: createvm
-      
-      
+
     - name: Salida de la creacion de maquina virtual
       debug:
-        msg: "Salida de la creacion de maquina virtual {{ createvm }}"
-
+        msg: Salida de la creacion de maquina virtual {{ createvm }}

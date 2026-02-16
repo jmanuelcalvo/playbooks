@@ -1,11 +1,10 @@
 ---
-  - name: Validar si un servicio se encuentra activo
-    hosts: all
-    gather_facts: no
-    vars:
-      servicio: chronyd
-    tasks:
-
+- name: Validar si un servicio se encuentra activo
+  hosts: all
+  gather_facts: false
+  vars:
+    servicio: chronyd
+  tasks:
     - name: Validar informacion del servicio {{ servicio }}
       ansible.builtin.systemd:
         name: "{{ servicio }}.service"
