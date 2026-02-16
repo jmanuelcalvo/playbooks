@@ -1,0 +1,30 @@
+---
+- name: Registro y Suscripción de Nodos RHEL 8
+  hosts: all
+  become: true
+  # Se recomienda usar variables descriptivas que coincidan con tu Survey
+  vars:
+    rhel_user: "{{ rhel_subscription_user }}"
+    rhel_pass: "{{ rhel_subscription_password }}"
+
+  tasks:
+    - name: Registrar el sistema y adjuntar suscripciones automáticamente
+      community.general.redhat_subscription:
+        state: present
+        username: "{{ rhel_user }}"
+        password: "{{ rhel_pass }}"
+        auto_attach: true
+        force_register: true
+      # 'no_log' es vital para evitar que la contraseña se guarde en los logs de la ejecución
+      no_log: true
+      register: subscription_result
+
+    - name: Mostrar estado de la suscripción
+      ansible.builtin.debug:
+        msg: "El sistema se ha registrado exitosamente bajo el usuario {{ rhel_user }}"
+      when: subscription_result.changed
+
+    - name: Limpiar metadatos de los repositorios
+      ansible.builtin.command: dnf clean all
+      when: subscription_result.changed
+      changed_when: false
