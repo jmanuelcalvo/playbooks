@@ -1,30 +1,35 @@
 ---
-- name: Registro y Suscripción de Nodos RHEL 8
+- name: Register RHEL 8 system with Red Hat
   hosts: all
   become: true
-  # Se recomienda usar variables descriptivas que coincidan con tu Survey
-  vars:
-    rhel_user: "{{ rhel_subscription_user }}"
-    rhel_pass: "{{ rhel_subscription_password }}"
-
+  gather_facts: true
   tasks:
-    - name: Registrar el sistema y adjuntar suscripciones automáticamente
+
+    - name: Ensure subscription-manager package is installed
+      ansible.builtin.package:
+        name: subscription-manager
+        state: present
+
+    - name: Check if system is already registered
+      ansible.builtin.stat:
+        path: /etc/pki/consumer/cert.pem
+      register: rhsm_cert
+
+    - name: Register system using Red Hat credentials
       community.general.redhat_subscription:
         state: present
-        username: "{{ rhel_user }}"
-        password: "{{ rhel_pass }}"
-        auto_attach: true
-        force_register: true
-      # 'no_log' es vital para evitar que la contraseña se guarde en los logs de la ejecución
+        username: "{{ rhsm_username }}"
+        password: "{{ rhsm_password }}"
+        auto_attach: "{{ rhsm_auto_attach | default(true) }}"
+      when: not rhsm_cert.stat.exists
       no_log: true
-      register: subscription_result
 
-    - name: Mostrar estado de la suscripción
-      ansible.builtin.debug:
-        msg: "El sistema se ha registrado exitosamente bajo el usuario {{ rhel_user }}"
-      when: subscription_result.changed
-
-    - name: Limpiar metadatos de los repositorios
-      ansible.builtin.command: dnf clean all
-      when: subscription_result.changed
+    - name: Display subscription status
+      ansible.builtin.command:
+        cmd: subscription-manager status
+      register: subscription_status
       changed_when: false
+
+    - name: Show subscription status
+      ansible.builtin.debug:
+        var: subscription_status.stdout
