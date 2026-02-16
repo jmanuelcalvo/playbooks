@@ -1,0 +1,35 @@
+---
+- name: Install and configure Cockpit on RHEL 8
+  hosts: all
+  become: true
+  vars:
+    cockpit_package_name: cockpit
+    cockpit_service_name: cockpit.socket
+    cockpit_firewall_service: cockpit
+
+  tasks:
+    - name: Ensure Cockpit package is installed
+      ansible.builtin.dnf:
+        name: "{{ cockpit_package_name }}"
+        state: present
+
+
+    - name: Ensure Cockpit service is enabled and started
+      ansible.builtin.systemd:
+        name: "{{ cockpit_service_name }}"
+        enabled: true
+        state: started
+
+    - name: Allow Cockpit service through firewalld
+      ansible.posix.firewalld:
+        service: "{{ cockpit_firewall_service }}"
+        permanent: true
+        state: enabled
+        immediate: true
+      when:
+        - ansible_facts['os_family'] == "RedHat"
+        - ansible_facts['distribution_major_version'] == "8"
+
+    - name: Display Cockpit access URL
+      ansible.builtin.debug:
+        msg: "Cockpit is available at https://{{ ansible_host | default(inventory_hostname) }}:9090"
