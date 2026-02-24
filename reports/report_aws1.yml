@@ -1,6 +1,6 @@
 ---
 - name: Create AWS Detailed Report
-  hosts: localhost
+  hosts: all
   tasks:
 
   - name: Get all regions
