@@ -1,28 +1,40 @@
 ---
-- name: Generar Reporte de AWS en Servidor Dedicado
-  hosts: all # O los nombres de tus servidores remotos
-  become: true
-  gather_facts: true
-
-  # ESTA ES LA MAGIA: Pasamos las llaves de AWS desde AAP a la máquina remota
-  environment:
-    AWS_ACCESS_KEY_ID: "{{ lookup('env', 'AWS_ACCESS_KEY_ID') }}"
-    AWS_SECRET_ACCESS_KEY: "{{ lookup('env', 'AWS_SECRET_ACCESS_KEY') }}"
-    AWS_REGION: "us-east-1" 
-
+# ==============================================================================
+# FASE 1: Dejar que Shadowman haga su magia y consulte AWS en el contenedor local
+# ==============================================================================
+- name: Generar Reporte de AWS en Contenedor AAP
+  hosts: localhost
+  become: true         # Necesario para que el contenedor instale Apache temporalmente
+  gather_facts: true   # CRÍTICO: Esto fue lo que causó tu primer error, debe estar en true
+  
   tasks:
-    - name: 1. Asegurar que pip está instalado (Requisito para hablar con AWS)
-      ansible.builtin.package:
-        name: python3-pip
-        state: present
-
-    - name: 2. Instalar librerías de Python para AWS (boto3)
-      ansible.builtin.pip:
-        name: 
-          - boto3
-          - botocore
-        state: present
-
-    - name: 3. Ejecutar el rol de reporte de AWS de Shadowman
+    - name: Ejecutar el rol original de Shadowman
       ansible.builtin.include_role:
         name: shadowman.reports.build_report_aws
+
+# ==============================================================================
+# FASE 2: Rescatar el HTML generado y enviarlo a tus máquinas reales
+# ==============================================================================
+- name: Publicar el reporte en servidores remotos
+  hosts: all           # Aquí AAP se conectará a jmanuel-delete y pacman01
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Asegurar que Apache está instalado en las máquinas destino
+      ansible.builtin.package:
+        name: httpd
+        state: present
+
+    - name: Asegurar que Apache está corriendo en las máquinas destino
+      ansible.builtin.service:
+        name: httpd
+        state: started
+        enabled: true
+
+    - name: Copiar el reporte rescatado hacia los servidores web reales
+      ansible.builtin.copy:
+        # Copiamos desde el contenedor (localhost) hacia la máquina remota
+        src: /var/www/html/index.html 
+        dest: /var/www/html/index.html
+        mode: '0644'
