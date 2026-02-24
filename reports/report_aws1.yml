@@ -1,41 +1,28 @@
 ---
-- name: Create AWS Detailed Report
-  hosts: all
+- name: Generar Reporte de AWS en Servidor Dedicado
+  hosts: all # O los nombres de tus servidores remotos
+  become: true
+  gather_facts: true
+
+  # ESTA ES LA MAGIA: Pasamos las llaves de AWS desde AAP a la máquina remota
+  environment:
+    AWS_ACCESS_KEY_ID: "{{ lookup('env', 'AWS_ACCESS_KEY_ID') }}"
+    AWS_SECRET_ACCESS_KEY: "{{ lookup('env', 'AWS_SECRET_ACCESS_KEY') }}"
+    AWS_REGION: "us-east-1" 
+
   tasks:
+    - name: 1. Asegurar que pip está instalado (Requisito para hablar con AWS)
+      ansible.builtin.package:
+        name: python3-pip
+        state: present
 
-  - name: Retrieve vpc information for {{ item.region_name }}
-    amazon.aws.ec2_vpc_net_info:
-      region: "{{ item.region_name }}"
-    register: vpc_info
-    delegate_to: localhost
+    - name: 2. Instalar librerías de Python para AWS (boto3)
+      ansible.builtin.pip:
+        name: 
+          - boto3
+          - botocore
+        state: present
 
-  - name: Retrieve info for ec2 instances
-    amazon.aws.ec2_instance_info:
-      region: "{{ item.region_name }}"
-    register: ec2_instance_info
-    delegate_to: localhost
-
-  - name: Retrieve information about Internet Gateways IGWs
-    amazon.aws.ec2_vpc_igw_info:
-      region: "{{ item.region_name }}"
-    register: igw_info
-    delegate_to: localhost
-  
-# Dashes are not allowed as Ansible var names so we use underscores _
-  - name: Set facts all info for {{ item.region_name }}
-    ansible.builtin.set_fact:
-      '{{ item.region_name|replace("-", "_") }}':
-        vpc_info: '{{ vpc_info }}'
-        ec2_instance_info: '{{ ec2_instance_info }}'
-        igw_info: '{{ igw_info }}'
-
-  - name: Set facts all info for {{ item.region_name }}
-    ansible.builtin.set_fact:
-      all_ec2_regions: "{{ all_ec2_regions | default([]) + [{item.region_name | replace('-', '_'): hostvars[inventory_hostname][item.region_name | replace('-', '_')]}] }}"
-
-  - name: Build the report
-    ansible.builtin.include_role:
-      name: shadowman.reports.build_report_aws
-      apply:
-        delegate_to: "{{ groups['report_server'][0] }}"
-        run_once: true      
+    - name: 3. Ejecutar el rol de reporte de AWS de Shadowman
+      ansible.builtin.include_role:
+        name: shadowman.reports.build_report_aws
