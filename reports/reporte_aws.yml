@@ -1,0 +1,8 @@
+---
+- name: Generar Reporte de AWS
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Ejecutar el rol de reporte de AWS de Shadowman
+      ansible.builtin.include_role:
+        name: shadowman.reports.build_report_aws
