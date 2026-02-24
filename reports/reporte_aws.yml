@@ -7,3 +7,6 @@
     - name: Ejecutar el rol de reporte de AWS de Shadowman
       ansible.builtin.include_role:
         name: shadowman.reports.build_report_aws
+        apply:
+          delegate_to: "{{ groups['report_server'][0] }}"
+          run_once: true
