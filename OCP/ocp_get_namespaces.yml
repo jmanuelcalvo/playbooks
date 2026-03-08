@@ -1,0 +1,12 @@
+- hosts: all
+  gather_facts: false
+
+  tasks:
+
+    - name: Get namespaces
+      kubernetes.core.k8s_info:
+        kind: Namespace
+      register: namespaces
+
+    - ansible.builtin.debug:
+        var: namespaces.resources
