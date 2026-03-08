@@ -1,0 +1,91 @@
+---
+- name: Bootstrap OpenShift Project
+  hosts: all
+  gather_facts: false
+
+  collections:
+    - kubernetes.core
+
+  vars:
+
+    ocp_project_name: "{{ project_name }}"
+    ocp_project_description: "{{ project_description | default('Project created via Ansible') }}"
+    ocp_cpu_request: "{{ cpu_request | default('2') }}"
+    ocp_memory_request: "{{ memory_request | default('4Gi') }}"
+    ocp_cpu_limit: "{{ cpu_limit | default('4') }}"
+    ocp_memory_limit: "{{ memory_limit | default('8Gi') }}"
+
+  tasks:
+
+    - name: Create namespace
+      kubernetes.core.k8s:
+        host: "{{ k8s_auth_host }}"
+        api_key: "{{ k8s_auth_api_key }}"
+        verify_ssl: "{{ k8s_auth_verify_ssl }}"
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: "{{ ocp_project_name }}"
+            labels:
+              managed-by: ansible
+              environment: "{{ environment | default('dev') }}"
+
+    - name: Create resource quota
+      kubernetes.core.k8s:
+        host: "{{ k8s_auth_host }}"
+        api_key: "{{ k8s_auth_api_key }}"
+        verify_ssl: "{{ k8s_auth_verify_ssl }}"
+        state: present
+        definition:
+          apiVersion: v1
+          kind: ResourceQuota
+          metadata:
+            name: compute-quota
+            namespace: "{{ ocp_project_name }}"
+          spec:
+            hard:
+              requests.cpu: "{{ ocp_cpu_request }}"
+              requests.memory: "{{ ocp_memory_request }}"
+              limits.cpu: "{{ ocp_cpu_limit }}"
+              limits.memory: "{{ ocp_memory_limit }}"
+
+    - name: Create limit range
+      kubernetes.core.k8s:
+        host: "{{ k8s_auth_host }}"
+        api_key: "{{ k8s_auth_api_key }}"
+        verify_ssl: "{{ k8s_auth_verify_ssl }}"
+        state: present
+        definition:
+          apiVersion: v1
+          kind: LimitRange
+          metadata:
+            name: default-limits
+            namespace: "{{ ocp_project_name }}"
+          spec:
+            limits:
+              - default:
+                  cpu: 500m
+                  memory: 512Mi
+                defaultRequest:
+                  cpu: 200m
+                  memory: 256Mi
+                type: Container
+
+    - name: Create service account for pipelines
+      kubernetes.core.k8s:
+        host: "{{ k8s_auth_host }}"
+        api_key: "{{ k8s_auth_api_key }}"
+        verify_ssl: "{{ k8s_auth_verify_ssl }}"
+        state: present
+        definition:
+          apiVersion: v1
+          kind: ServiceAccount
+          metadata:
+            name: cicd-sa
+            namespace: "{{ ocp_project_name }}"
+
+    - name: Show project bootstrap result
+      ansible.builtin.debug:
+        msg: "Project {{ ocp_project_name }} created successfully"
