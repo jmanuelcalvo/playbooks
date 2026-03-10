@@ -32,7 +32,7 @@
 
     - name: Wait for application to become reachable
       ansible.builtin.uri:
-        url: "{{ app_url }}/health"
+        url: "{{ app_url }}/"
         method: GET
         status_code: 200
       register: health_check
