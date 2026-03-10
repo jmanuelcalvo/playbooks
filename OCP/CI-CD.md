@@ -1,3 +1,84 @@
+                          ┌──────────────────────────┐
+                          │        Developer         │
+                          │   Push code to Git       │
+                          └─────────────┬────────────┘
+                                        │
+                                        ▼
+                          ┌──────────────────────────┐
+                          │        CI Pipeline       │
+                          │   Build container image  │
+                          │   Push to registry       │
+                          └─────────────┬────────────┘
+                                        │
+                                        ▼
+                    ┌────────────────────────────────────┐
+                    │        AAP Workflow Trigger        │
+                    │  (API call / webhook / pipeline)   │
+                    └─────────────┬──────────────────────┘
+                                  │
+                                  ▼
+                     ┌─────────────────────────┐
+                     │  Bootstrap Project      │
+                     │  - Namespace            │
+                     │  - Quotas               │
+                     │  - LimitRanges          │
+                     └─────────────┬───────────┘
+                                   │
+                                   ▼
+                     ┌─────────────────────────┐
+                     │   Configure RBAC        │
+                     │  - RoleBindings         │
+                     │  - Group permissions    │
+                     └─────────────┬───────────┘
+                                   │
+                                   ▼
+                     ┌─────────────────────────┐
+                     │    Deploy Application   │
+                     │  - Deployment           │
+                     │  - Service              │
+                     └─────────────┬───────────┘
+                                   │
+                                   ▼
+                     ┌─────────────────────────┐
+                     │       Create Route      │
+                     │  - Expose service       │
+                     │  - Public hostname      │
+                     └─────────────┬───────────┘
+                                   │
+                                   ▼
+                     ┌─────────────────────────┐
+                     │      Smoke Tests        │
+                     │  - /health endpoint     │
+                     │  - Validate response    │
+                     └─────────────┬───────────┘
+                                   │
+                        ┌──────────┴───────────┐
+                        │                      │
+                        ▼                      ▼
+             ┌───────────────────┐   ┌────────────────────┐
+             │   Deployment OK   │   │   Deployment FAIL  │
+             │                   │   │                    │
+             ▼                   │   ▼                    │
+   ┌──────────────────────┐     │  ┌─────────────────────┐
+   │ Generate Report      │     │  │ Rollback Deployment │
+   │ - app name           │     │  │ or Notify Team      │
+   │ - route URL          │     │  └─────────────────────┘
+   │ - test result        │     │
+   └──────────┬───────────┘     │
+              │                 │
+              ▼                 │
+   ┌───────────────────────────┐│
+   │ Send Notification         ││
+   │ Slack / Email / Teams     ││
+   └───────────────────────────┘│
+                                │
+                                ▼
+                      ┌───────────────────┐
+                      │   Deployment End  │
+                      └───────────────────┘
+
+
+
 # Workflow
 
 1. Bootstrap Completo

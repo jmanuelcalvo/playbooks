@@ -1,15 +1,135 @@
-- name: Update deployment image
-  kubernetes.core.k8s:
-    state: present
-    definition:
-      apiVersion: apps/v1
-      kind: Deployment
-      metadata:
-        name: "{{ app_name }}"
-        namespace: "{{ namespace }}"
-      spec:
-        template:
+---
+- name: Deploy Demo App using Source-to-Image
+  hosts: all
+  gather_facts: false
+
+  vars:
+
+    namespace: "{{ project_name }}"
+    app_name: app01
+
+    git_repo: https://github.com/jmanuelcalvo/app.git
+    builder_image: php:8.3-ubi10
+
+  tasks:
+
+    - name: Create ImageStream
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: image.openshift.io/v1
+          kind: ImageStream
+          metadata:
+            name: "{{ app_name }}"
+            namespace: "{{ namespace }}"
+
+    - name: Create BuildConfig for S2I
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: build.openshift.io/v1
+          kind: BuildConfig
+          metadata:
+            name: "{{ app_name }}"
+            namespace: "{{ namespace }}"
           spec:
-            containers:
-              - name: "{{ app_name }}"
-                image: "{{ image }}"
+
+            source:
+              type: Git
+              git:
+                uri: "{{ git_repo }}"
+
+            strategy:
+              type: Source
+              sourceStrategy:
+                from:
+                  kind: ImageStreamTag
+                  name: "{{ builder_image }}"
+                  namespace: openshift
+
+            output:
+              to:
+                kind: ImageStreamTag
+                name: "{{ app_name }}:latest"
+
+            triggers:
+              - type: ConfigChange
+              - type: ImageChange
+
+    - name: Create Deployment
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: "{{ app_name }}"
+            namespace: "{{ namespace }}"
+          spec:
+            replicas: 1
+            selector:
+              matchLabels:
+                app: "{{ app_name }}"
+            template:
+              metadata:
+                labels:
+                  app: "{{ app_name }}"
+              spec:
+                containers:
+                  - name: "{{ app_name }}"
+                    image: "image-registry.openshift-image-registry.svc:5000/{{ namespace }}/{{ app_name }}:latest"
+                    ports:
+                      - containerPort: 8080
+
+    - name: Create Service
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: "{{ app_name }}"
+            namespace: "{{ namespace }}"
+          spec:
+            selector:
+              app: "{{ app_name }}"
+            ports:
+              - port: 80
+                targetPort: 8080
+
+    - name: Create Route
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: route.openshift.io/v1
+          kind: Route
+          metadata:
+            name: "{{ app_name }}"
+            namespace: "{{ namespace }}"
+          spec:
+            to:
+              kind: Service
+              name: "{{ app_name }}"
+            port:
+              targetPort: 8080
+
+    - name: Trigger first build
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: build.openshift.io/v1
+          kind: BuildRequest
+          metadata:
+            name: "{{ app_name }}"
+            namespace: "{{ namespace }}"
+
+    - name: Show deployment message
+      ansible.builtin.debug:
+        msg: |
+          Application deployment started.
+
+          App: {{ app_name }}
+          Namespace: {{ namespace }}
+
+          You can monitor the build with:
+          oc get builds -n {{ namespace }}
