@@ -1,6 +1,6 @@
 ---
 - name: Bootstrap OpenShift Project
-  hosts: all
+  hosts: localhost
   gather_facts: false
 
   collections:
