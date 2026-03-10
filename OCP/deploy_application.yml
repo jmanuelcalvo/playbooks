@@ -1,0 +1,15 @@
+- name: Update deployment image
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: "{{ app_name }}"
+        namespace: "{{ namespace }}"
+      spec:
+        template:
+          spec:
+            containers:
+              - name: "{{ app_name }}"
+                image: "{{ image }}"

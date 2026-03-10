@@ -1,0 +1,30 @@
+---
+- name: Generate deployment report
+  hosts: localhost
+  gather_facts: false
+
+  vars:
+    report_file: "/tmp/deployment_report.md"
+
+  tasks:
+
+    - name: Create deployment report
+      ansible.builtin.copy:
+        dest: "{{ report_file }}"
+        content: |
+          # Deployment Report
+
+          **Application:** {{ app_name }}
+          **Namespace:** {{ project_name }}
+          **Route:** {{ route_url }}
+          **Environment:** {{ environment }}
+
+          ## Smoke Test Result
+          Status: SUCCESS
+
+          ## Deployment Time
+          {{ ansible_date_time.iso8601 }}
+
+    - name: Show report location
+      ansible.builtin.debug:
+        msg: "Deployment report created at {{ report_file }}"

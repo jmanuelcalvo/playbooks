@@ -1,0 +1,21 @@
+---
+- name: Run smoke tests
+  hosts: localhost
+  gather_facts: false
+
+  vars:
+    app_url: "{{ route_url }}"
+
+  tasks:
+
+    - name: Check application health endpoint
+      ansible.builtin.uri:
+        url: "{{ app_url }}/health"
+        method: GET
+        return_content: yes
+        status_code: 200
+      register: health_check
+
+    - name: Show response
+      ansible.builtin.debug:
+        var: health_check.status

@@ -1,0 +1,32 @@
+---
+- name: Create OpenShift Route
+  hosts: all
+  gather_facts: false
+
+  vars:
+    namespace: "{{ project_name }}"
+    service_name: "{{ app_name }}"
+    route_host: "{{ app_name }}-{{ namespace }}.apps.cluster.example.com"
+
+  tasks:
+
+    - name: Create route
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: route.openshift.io/v1
+          kind: Route
+          metadata:
+            name: "{{ service_name }}"
+            namespace: "{{ namespace }}"
+          spec:
+            host: "{{ route_host }}"
+            to:
+              kind: Service
+              name: "{{ service_name }}"
+            port:
+              targetPort: http
+
+    - name: Show route URL
+      ansible.builtin.debug:
+        msg: "Application exposed at http://{{ route_host }}"

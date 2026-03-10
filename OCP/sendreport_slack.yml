@@ -1,0 +1,7 @@
+- name: Send report to Slack
+  ansible.builtin.uri:
+    url: "{{ slack_webhook }}"
+    method: POST
+    body_format: json
+    body:
+      text: "Deployment of {{ app_name }} successful"

@@ -1,0 +1,32 @@
+---
+- name: Configure RBAC for application project
+  hosts: all
+  gather_facts: false
+
+  vars:
+    namespace: "{{ project_name }}"
+    developer_group: "{{ dev_group | default('developers') }}"
+
+  tasks:
+
+    - name: Create RoleBinding for developers
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: rbac.authorization.k8s.io/v1
+          kind: RoleBinding
+          metadata:
+            name: developers-edit
+            namespace: "{{ namespace }}"
+          subjects:
+            - kind: Group
+              name: "{{ developer_group }}"
+              apiGroup: rbac.authorization.k8s.io
+          roleRef:
+            kind: ClusterRole
+            name: edit
+            apiGroup: rbac.authorization.k8s.io
+
+    - name: Confirm RBAC deployment
+      ansible.builtin.debug:
+        msg: "RBAC configured for {{ developer_group }} in {{ namespace }}"
