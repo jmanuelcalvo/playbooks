@@ -52,9 +52,6 @@
     - name: Create limit range
       redhat.openshift.k8s:
         state: present
-        host: "{{ k8s_auth_host }}"
-        api_key: "{{ k8s_auth_api_key }}"
-        verify_ssl: "{{ k8s_auth_verify_ssl }}"
         definition:
           apiVersion: v1
           kind: LimitRange
@@ -74,9 +71,6 @@
     - name: Create service account for pipelines
       redhat.openshift.k8s:
         state: present
-        host: "{{ k8s_auth_host }}"
-        api_key: "{{ k8s_auth_api_key }}"
-        verify_ssl: "{{ k8s_auth_verify_ssl }}"
         definition:
           apiVersion: v1
           kind: ServiceAccount
