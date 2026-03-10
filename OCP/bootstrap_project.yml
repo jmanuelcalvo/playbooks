@@ -33,9 +33,6 @@
     - name: Create resource quota
       redhat.openshift.k8s:
         state: present
-        host: "{{ k8s_auth_host }}"
-        api_key: "{{ k8s_auth_api_key }}"
-        verify_ssl: "{{ k8s_auth_verify_ssl }}"
         definition:
           apiVersion: v1
           kind: ResourceQuota
