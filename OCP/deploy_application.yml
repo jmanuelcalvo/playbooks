@@ -113,15 +113,6 @@
             port:
               targetPort: 8080
 
-    - name: Trigger first build
-      kubernetes.core.k8s:
-        state: present
-        definition:
-          apiVersion: build.openshift.io/v1
-          kind: BuildRequest
-          metadata:
-            name: "{{ app_name }}"
-            namespace: "{{ namespace }}"
 
     - name: Show deployment message
       ansible.builtin.debug:
