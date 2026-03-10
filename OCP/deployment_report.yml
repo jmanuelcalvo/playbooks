@@ -4,27 +4,67 @@
   gather_facts: false
 
   vars:
-    report_file: "/tmp/deployment_report.md"
+    ocp_namespace: "{{ project_name }}"
+    application: "{{ app_name | default('app01') }}"
 
   tasks:
 
-    - name: Create deployment report
-      ansible.builtin.copy:
-        dest: "{{ report_file }}"
-        content: |
-          # Deployment Report
+    - name: Get application route
+      kubernetes.core.k8s_info:
+        api_version: route.openshift.io/v1
+        kind: Route
+        namespace: "{{ ocp_namespace }}"
+        name: "{{ application }}"
+      register: route_info
 
-          **Application:** {{ app_name }}
-          **Namespace:** {{ project_name }}
-          **Route:** {{ route_url }}
-          **Environment:** {{ environment }}
+    - name: Build application URL
+      ansible.builtin.set_fact:
+        route_url: "http://{{ route_info.resources[0].spec.host }}"
+      when: route_info.resources | length > 0
 
-          ## Smoke Test Result
-          Status: SUCCESS
+    - name: Get pods for application
+      kubernetes.core.k8s_info:
+        api_version: v1
+        kind: Pod
+        namespace: "{{ ocp_namespace }}"
+        label_selectors:
+          - app={{ application }}
+      register: pods_info
 
-          ## Deployment Time
-          {{ ansible_date_time.iso8601 }}
+    - name: Determine pod status
+      ansible.builtin.set_fact:
+        pod_status: "{{ pods_info.resources[0].status.phase if pods_info.resources | length > 0 else 'UNKNOWN' }}"
 
-    - name: Show report location
+    - name: Run smoke test
+      ansible.builtin.uri:
+        url: "{{ route_url }}"
+        method: GET
+        status_code: 200
+      register: smoke_result
+      ignore_errors: true
+      when: route_url is defined
+
+    - name: Determine smoke status
+      ansible.builtin.set_fact:
+        smoke_status: "{{ 'SUCCESS' if smoke_result.status == 200 else 'FAILED' }}"
+      when: route_url is defined
+
+    - name: Display deployment report
       ansible.builtin.debug:
-        msg: "Deployment report created at {{ report_file }}"
+        msg: |
+          ==================================================
+                    APPLICATION DEPLOYMENT REPORT
+          ==================================================
+
+          Application : {{ application }}
+          Namespace   : {{ ocp_namespace }}
+
+          Route URL   : {{ route_url | default('Not Found') }}
+
+          Pod Status  : {{ pod_status }}
+
+          Smoke Test  : {{ smoke_status | default('NOT EXECUTED') }}
+
+          Pods Found  : {{ pods_info.resources | length }}
+
+          ==================================================
