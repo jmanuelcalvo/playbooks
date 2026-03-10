@@ -27,7 +27,8 @@
             name: "{{ ocp_project_name }}"
             labels:
               managed-by: ansible
-              environment: "{{ environment | default('dev') | string }}"
+              environment: "{{ ocp_environment }}"
+          
 
     - name: Create resource quota
       redhat.openshift.k8s:
