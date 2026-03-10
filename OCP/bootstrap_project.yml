@@ -4,7 +4,7 @@
   gather_facts: false
 
   collections:
-    - kubernetes.core
+    - redhat.openshift
 
   vars:
 
@@ -18,11 +18,11 @@
   tasks:
 
     - name: Create namespace
-      kubernetes.core.k8s:
+      redhat.openshift.k8s:
+        state: present
         host: "{{ k8s_auth_host }}"
         api_key: "{{ k8s_auth_api_key }}"
         verify_ssl: "{{ k8s_auth_verify_ssl }}"
-        state: present
         definition:
           apiVersion: v1
           kind: Namespace
@@ -33,11 +33,11 @@
               environment: "{{ environment | default('dev') }}"
 
     - name: Create resource quota
-      kubernetes.core.k8s:
+      redhat.openshift.k8s:
+        state: present
         host: "{{ k8s_auth_host }}"
         api_key: "{{ k8s_auth_api_key }}"
         verify_ssl: "{{ k8s_auth_verify_ssl }}"
-        state: present
         definition:
           apiVersion: v1
           kind: ResourceQuota
@@ -52,11 +52,11 @@
               limits.memory: "{{ ocp_memory_limit }}"
 
     - name: Create limit range
-      kubernetes.core.k8s:
+      redhat.openshift.k8s:
+        state: present
         host: "{{ k8s_auth_host }}"
         api_key: "{{ k8s_auth_api_key }}"
         verify_ssl: "{{ k8s_auth_verify_ssl }}"
-        state: present
         definition:
           apiVersion: v1
           kind: LimitRange
@@ -74,11 +74,11 @@
                 type: Container
 
     - name: Create service account for pipelines
-      kubernetes.core.k8s:
+      redhat.openshift.k8s:
+        state: present
         host: "{{ k8s_auth_host }}"
         api_key: "{{ k8s_auth_api_key }}"
         verify_ssl: "{{ k8s_auth_verify_ssl }}"
-        state: present
         definition:
           apiVersion: v1
           kind: ServiceAccount
