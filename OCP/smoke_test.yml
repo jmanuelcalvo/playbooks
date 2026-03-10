@@ -4,18 +4,42 @@
   gather_facts: false
 
   vars:
-    app_url: "{{ route_url }}"
+    ocp_namespace: "{{ project_name }}"
+    app_name: "{{ app_name | default('app01') }}"
 
   tasks:
 
-    - name: Check application health endpoint
+    - name: Get application route
+      kubernetes.core.k8s_info:
+        api_version: route.openshift.io/v1
+        kind: Route
+        namespace: "{{ ocp_namespace }}"
+        name: "{{ app_name }}"
+      register: route_info
+
+    - name: Fail if route not found
+      ansible.builtin.fail:
+        msg: "Route for application {{ app_name }} not found in namespace {{ ocp_namespace }}"
+      when: route_info.resources | length == 0
+
+    - name: Build application URL
+      ansible.builtin.set_fact:
+        app_url: "http://{{ route_info.resources[0].spec.host }}"
+
+    - name: Show detected route
+      ansible.builtin.debug:
+        msg: "Application URL detected: {{ app_url }}"
+
+    - name: Wait for application to become reachable
       ansible.builtin.uri:
         url: "{{ app_url }}/health"
         method: GET
-        return_content: yes
         status_code: 200
       register: health_check
+      retries: 20
+      delay: 10
+      until: health_check.status == 200
 
-    - name: Show response
+    - name: Show health response
       ansible.builtin.debug:
-        var: health_check.status
+        msg: "Application is healthy (HTTP {{ health_check.status }})"
