@@ -1,7 +1,7 @@
 ---
 - name: Gather CPU RAM and Disk Space Usage
   hosts: all
-  gather_facts: yes
+  gather_facts: true
   tasks:
     - name: Gather CPU usage
       shell: top -bn1 | grep 'Cpu(s)' | awk '{print $2}'
@@ -10,7 +10,7 @@
       shell: top -bn1 | awk '/MiB Mem/ {printf "%.2f\n", $8/$4 * 100}'
       register: ram_usage
     - name: Gather Disk Space
-      shell: "df -h --output=pcent / | awk 'NR==2 {print $1}'"
+      shell: df -h --output=pcent / | awk 'NR==2 {print $1}'
       register: disk_space
     - name: Usage Stats
       debug:

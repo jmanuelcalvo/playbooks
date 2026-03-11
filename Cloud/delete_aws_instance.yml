@@ -1,20 +1,20 @@
+---
 - name: Eliminar una instancia de AWS
   hosts: localhost
   connection: local
-  gather_facts: no
+  gather_facts: false
   vars:
-    instance_name: nombredelainstacia 
+    instance_name: nombredelainstacia
     region: us-east-1
   tasks:
-    
-   - name: "Eliminar la instacia llamada {{ instance_name }}"
-     amazon.aws.ec2_instance:
-       state: absent
-       region: "{{ region }}"
-       filters:
-         tag:Name: "{{ instance_name }}"
-     register: ec2
+    - name: Eliminar la instacia llamada {{ instance_name }}
+      amazon.aws.ec2_instance:
+        state: absent
+        region: "{{ region }}"
+        filters:
+          tag:Name: "{{ instance_name }}"
+      register: ec2
 
-   - name: Recolectar informacion de la instancia
-     ansible.builtin.debug:
-       msg: "El mensaje de salida es {{ ec2 }}"
+    - name: Recolectar informacion de la instancia
+      ansible.builtin.debug:
+        msg: El mensaje de salida es {{ ec2 }}

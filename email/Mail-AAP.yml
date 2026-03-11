@@ -1,3 +1,4 @@
+---
 - hosts: localhost
   vars:
     name: srvweb
@@ -7,27 +8,24 @@
     smtp_port: 25
     smtp_to: operador@aaparm01.jmanuelcalvo.com
   tasks:
+    - name: Envio de correo satisfactorio
+      community.general.mail:
+        host: "{{ smtp_host }}"
+        port: "{{ smtp_port }}"
+        to: "{{ smtp_to }}"
+        subject: "{{ status_msg }} - En instancia {{ name }} de tipo {{ instance_type }} se aprovisono satisfactoriamente"
+        body: |
+          - "Successful - La instancia {{ name }} se ha aprovisionado correctamente."
+          - "Ejecutado el: {{ ansible_date_time.date }} {{ ansible_date_time.hour }}:{{ ansible_date_time.minute }}"
+      when: status_msg  == "OK"
 
-  - name: Envio de correo satisfactorio
-    community.general.mail:
-      host: "{{ smtp_host }}"
-      port: "{{ smtp_port }}"
-      to: "{{ smtp_to }}"
-      subject: "{{ status_msg }} - En instancia {{ name }} de tipo {{ instance_type }} se aprovisono satisfactoriamente"
-      body: |
-        - "Successful - La instancia {{ name }} se ha aprovisionado correctamente."
-        - "Ejecutado el: {{ ansible_date_time.date }} {{ ansible_date_time.hour }}:{{ ansible_date_time.minute }}"
-    when:  status_msg  == "OK"
-
-
-
-  - name: Envio de correo fallo
-    community.general.mail:
-      host: "{{ smtp_host }}"
-      port: "{{ smtp_port }}"
-      to: "{{ smtp_to }}"
-      subject: "{{ status_msg }} - En instancia {{ name }} de tipo {{ instance_type }} se aprovisiono con errores"
-      body: |
-        - "Fallo - La instancia {{ name }} no se pudo aprovisionado."
-        - "Ejecutado el: {{ ansible_date_time.date }} {{ ansible_date_time.hour }}:{{ ansible_date_time.minute }}"
-    when:  status_msg  == "FALLO"
+    - name: Envio de correo fallo
+      community.general.mail:
+        host: "{{ smtp_host }}"
+        port: "{{ smtp_port }}"
+        to: "{{ smtp_to }}"
+        subject: "{{ status_msg }} - En instancia {{ name }} de tipo {{ instance_type }} se aprovisiono con errores"
+        body: |
+          - "Fallo - La instancia {{ name }} no se pudo aprovisionado."
+          - "Ejecutado el: {{ ansible_date_time.date }} {{ ansible_date_time.hour }}:{{ ansible_date_time.minute }}"
+      when: status_msg  == "FALLO"

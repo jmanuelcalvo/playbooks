@@ -6,40 +6,39 @@
     mysql_root_password: ABCde123.
     database: testdb
   tasks:
+    - name: Traer informacion de MySQL version, usuarios, bases de datos
+      community.mysql.mysql_info:
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+        filter:
+          - version
+          - databases
+        #- users
+        exclude_fields: db_size
+        return_empty_dbs: true
+      register: database_facts
 
-  - name: Traer informacion de MySQL version, usuarios, bases de datos
-    community.mysql.mysql_info:
-      login_user: root
-      login_password: "{{ mysql_root_password }}"
-      filter:
-      - version
-      - databases
-      #- users
-      exclude_fields: db_size
-      return_empty_dbs: true
-    register: database_facts
-
-  - name: Fallar si la bd {{ database }} no se encuentra el el servidor {{ ansible_host }}
-    ansible.builtin.fail:
-      msg: "La base de datos {{ database }} no está activo en el servidor."
-    when: '"{{ database }}" not in database_facts.databases'
+    - name: Fallar si la bd {{ database }} no se encuentra el el servidor {{ ansible_host }}
+      ansible.builtin.fail:
+        msg: La base de datos {{ database }} no está activo en el servidor.
+      when: '"{{ database }}" not in database_facts.databases'
     #when: '"database" not in database_facts.databases'
 
-  - name: Imprimir listado de bases de datos creadas
-    ansible.builtin.debug:
-      var: database_facts.databases
+    - name: Imprimir listado de bases de datos creadas
+      ansible.builtin.debug:
+        var: database_facts.databases
 
-  - name: Realizar una consulta a la base de datos {{ database }}
-    community.mysql.mysql_query:
-      login_user: root
-      login_password: "{{ mysql_root_password }}"
-      login_db: "{{ database }}"
-      query: SELECT * FROM customers
-    register: r_query
+    - name: Realizar una consulta a la base de datos {{ database }}
+      community.mysql.mysql_query:
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+        login_db: "{{ database }}"
+        query: SELECT * FROM customers
+      register: r_query
 
-  - name: Resultado de la busqueda
-    ansible.builtin.debug:
-      msg: "{{ r_query }}"
+    - name: Resultado de la busqueda
+      ansible.builtin.debug:
+        msg: "{{ r_query }}"
 
 #  - name: Query intermedio a la base de datos {{ database }}
 #    community.mysql.mysql_query:

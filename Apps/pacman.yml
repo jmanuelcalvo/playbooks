@@ -3,12 +3,11 @@
   gather_facts: false
   hosts: all
   tasks:
-
     - name: Verificar si httpd está instalado
       ansible.builtin.stat:
         path: /usr/sbin/httpd
       register: httpd_installed
-      
+
     - name: Instalacion de paquetes necesarios
       ansible.builtin.yum:
         name:
@@ -21,7 +20,7 @@
       ansible.builtin.debug:
         msg: "Error: El paquete httpd no está instalado en este servidor."
       when: httpd_installed.stat.exists == false
-    
+
     - name: Red Hat selinux disable
       ansible.builtin.command: setenforce 0
 
@@ -29,18 +28,18 @@
       ansible.builtin.git:
         repo: https://github.com/jmanuelcalvo/Pacman-html5.git
         dest: /var/www/html/pacman
-    
+
     - name: Iniciar servicio de apache
       ansible.builtin.service:
         name: httpd
-        state: started   
-                
+        state: started
+
     - name: Verificar el estado del servidor web
       ansible.builtin.uri:
-        url: "http://{{ ansible_host}}/pacman"
+        url: http://{{ ansible_host}}/pacman
         method: GET
       register: result
-      ignore_errors: yes  # Ignora errores de conexión, ya que el servidor podría no estar disponible
+      ignore_errors: true # Ignora errores de conexión, ya que el servidor podría no estar disponible
 
     - name: Mostrar mensaje de error si el estado no es 200
       debug:

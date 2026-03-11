@@ -3,21 +3,21 @@
   hosts: all
 
   tasks:
-  - name: Habiliatar el servicio de IIS
-    ansible.windows.win_feature:
-      name: Web-Server
-      state: present
+    - name: Habiliatar el servicio de IIS
+      ansible.windows.win_feature:
+        name: Web-Server
+        state: present
 
-  - name: Iniciar el servicio de IIS
-    ansible.windows.win_service:
-      name: W3Svc
-      state: started
+    - name: Iniciar el servicio de IIS
+      ansible.windows.win_service:
+        name: W3Svc
+        state: started
 
-  - name: Crear un archivo Web index.html
-    ansible.windows.win_copy:
-      content: "{{ iis_test_message }}"
-      dest: C:\Inetpub\wwwroot\index.html
+    - name: Crear un archivo Web index.html
+      ansible.windows.win_copy:
+        content: "{{ iis_test_message }}"
+        dest: C:\Inetpub\wwwroot\index.html
 
-  - name: Mostrar direccion IP del sitio Web
-    ansible.builtin.debug:
-      msg: http://{{ ansible_host }}
+    - name: Mostrar direccion IP del sitio Web
+      ansible.builtin.debug:
+        msg: http://{{ ansible_host }}

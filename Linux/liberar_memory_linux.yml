@@ -1,10 +1,10 @@
 ---
 - name: Chequear y limpiar memoria RAM en Linux y registrar ejecuciones
   hosts: all
-  become: yes
+  become: true
   vars:
-    threshold: 20  # Porcentaje de uso máximo permitido (modificable)
-    contador_file: /tmp/contador.txt  # Archivo para registrar el contador
+    threshold: 20 # Porcentaje de uso máximo permitido (modificable)
+    contador_file: /tmp/contador.txt # Archivo para registrar el contador
 
   tasks:
     - name: Obtener uso de memoria
@@ -20,7 +20,7 @@
       ansible.builtin.copy:
         content: "0\n"
         dest: "{{ contador_file }}"
-        force: no
+        force: false
 
     - name: Limpiar caches si el uso supera el umbral
       ansible.builtin.shell: echo 3 > /proc/sys/vm/drop_caches
@@ -39,5 +39,4 @@
 
     - name: Mostrar cantidad de ejecuciones
       ansible.builtin.debug:
-        msg: "El comando para liberar memoria ha sido ejecutado {{ contador_content['content'] | b64decode | int }} veces."
-  
+        msg: El comando para liberar memoria ha sido ejecutado {{ contador_content['content'] | b64decode | int }} veces.
