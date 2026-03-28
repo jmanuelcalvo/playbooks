@@ -9,19 +9,19 @@
       ansible.builtin.package_facts:
         manager: auto
 
-    - name: "Comprobar si un paquete llamado {{ paquete }} está instalado en la maquina {{ ansible_hostname }}"
+    - name: Comprobar si un paquete llamado {{ paquete }} está instalado en la maquina {{ ansible_hostname }}
       ansible.builtin.debug:
         msg: El paquete {{ paquete }} se encuentra instalado en la maquina {{ ansible_hostname }}"
-      when: "paquete in ansible_facts.packages"
+      when: paquete in ansible_facts.packages
 
-    - name: "Instalar {{ paquete }} si no esta instalado"
+    - name: Instalar {{ paquete }} si no esta instalado
       ansible.builtin.yum:
         name: "{{ paquete }}"
         state: present
       register: package_status
-      when: "paquete not in ansible_facts.packages"
+      when: paquete not in ansible_facts.packages
 
     - name: Mostrar resultado
       debug:
-        msg: "El paquete {{ paquete }} se instaló correctamente en la maquina {{ ansible_hostname }} ."
+        msg: El paquete {{ paquete }} se instaló correctamente en la maquina {{ ansible_hostname }} .
       when: paquete not in ansible_facts.packages

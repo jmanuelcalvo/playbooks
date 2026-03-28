@@ -1,17 +1,18 @@
+---
 - hosts: localhost
   connection: local
   gather_facts: false
   collections:
     - community.vmware
   tasks:
-  - name: Gather information of Virtual Machine
-    community.vmware.vmware_guest_info:
-      datacenter: "{{ datacenter }}"
-      name: "{{ nombre }}"
-    delegate_to: localhost
-    validate_certs: no
-    register: vm_info
+    - name: Gather information of Virtual Machine
+      community.vmware.vmware_guest_info:
+        datacenter: "{{ datacenter }}"
+        name: "{{ nombre }}"
+      delegate_to: localhost
+      validate_certs: false
+      register: vm_info
 
-  - name: Salida de la creacion de maquina virtual
-    debug:
-      msg: "Salida de la creacion de maquina virtual {{ vm_info }}"
+    - name: Salida de la creacion de maquina virtual
+      debug:
+        msg: Salida de la creacion de maquina virtual {{ vm_info }}

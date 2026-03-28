@@ -2,33 +2,30 @@
 - hosts: all
   name: Playbook de parcheo de maquinas Windowsa
   tasks:
-#    - name: Instalar Actualizaciones de windows
-#      win_updates:
-#        server_selection: managed_server
-#        category_names: 
-#          - CriticalUpdates
-#          - DefinitionUpdates
-#          - SecurityUpdates
-#          - Updates
-#        reboot: no
-#        state: installed
-#        log_path: C:\Windows\Temp\Pre-AllUpdatesFound.txt
-#      register: update_result
-      
+    #    - name: Instalar Actualizaciones de windows
+    #      win_updates:
+    #        server_selection: managed_server
+    #        category_names: 
+    #          - CriticalUpdates
+    #          - DefinitionUpdates
+    #          - SecurityUpdates
+    #          - Updates
+    #        reboot: no
+    #        state: installed
+    #        log_path: C:\Windows\Temp\Pre-AllUpdatesFound.txt
+    #      register: update_result
+
     - name: Install all updates and reboot as many times as needed
       ansible.windows.win_updates:
         #server_selection: managed_server
-        category_names: '*'
-        reboot: false      
+        category_names: "*"
+        reboot: false
         log_path: C:\Windows\Temp\Pre-AllUpdatesFound.txt
       register: update_result
-
 
     - name: Imprimir información
       debug:
         msg: "{{ update_result }}"
-    
-  
 
 #    - name: Instalar Actualizaciones de windows
 #      win_updates:

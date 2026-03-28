@@ -9,8 +9,7 @@
         format: gz
         exclude_path: "*.log"
 
-
-    - name: Buscar archivos para eliminarlos 
+    - name: Buscar archivos para eliminarlos
       find:
         paths: /var/log/httpd/
         patterns: "*.log"

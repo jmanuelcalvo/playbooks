@@ -1,3 +1,4 @@
+---
 - name: Revision de parches en windows server
   hosts: all
   tasks:
@@ -20,10 +21,9 @@
         log_path: C:\Windows\Temp\Pre-AllUpdatesFound.txt
       register: update_results
 
-#    - name: Informe de resultados actualizados
-#      debug:
-#        var: update_results
-
+    #    - name: Informe de resultados actualizados
+    #      debug:
+    #        var: update_results
 
     - name: Informe de resultados actualizados
       ansible.builtin.debug:

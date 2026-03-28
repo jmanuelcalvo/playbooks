@@ -1,4 +1,5 @@
-collections: 
+---
+collections:
   - name: community.vmware
   - name: community.general
   - name: community.windows

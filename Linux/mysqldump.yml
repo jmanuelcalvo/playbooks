@@ -1,10 +1,9 @@
 ---
 - name: Creacion de un dump de la BD
   hosts: all
-  gather_facts: no
+  gather_facts: false
   vars_files:
     - creds.yml
   tasks:
-
-  - name: mysqldump
-    shell: mysqldump -u {{ username }} -p{{ password }} {{ db_name }} > {{ dump_file }}
+    - name: mysqldump
+      shell: mysqldump -u {{ username }} -p{{ password }} {{ db_name }} > {{ dump_file }}

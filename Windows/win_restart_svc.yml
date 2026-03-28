@@ -7,7 +7,6 @@
   hosts: all
 
   tasks:
-
     - name: Obtener informacion del servicio {{ service }}
       ansible.windows.win_service_info:
         name: "{{ service }}"
@@ -17,7 +16,7 @@
       debug:
         msg: "{{ service_info.services[0].state }}"
 
-    - name: "Se {{ state }} el servicio {{ service }}"
+    - name: Se {{ state }} el servicio {{ service }}
       ansible.windows.win_service:
         name: "{{ service }}"
         state: "{{ state }}"

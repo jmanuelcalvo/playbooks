@@ -1,64 +1,62 @@
 ---
 - name: Playbook inicio de contenedores Odoo
   hosts: all
-  gather_facts: yes
+  gather_facts: true
   vars:
-    cliente: "redhat"
-    db_path: "/var/lib/{{ cliente }}"
+    cliente: redhat
+    db_path: /var/lib/{{ cliente }}
     puerto: 8171
   tasks:
+    - name: Apagar contenedor de BD
+      containers.podman.podman_container:
+        name: db-{{ cliente }}
+        image: postgres:13
+        state: stopped
+        pod: "{{ cliente }}"
 
+    - name: apagar contenedor de aplicaciones Odoo
+      containers.podman.podman_container:
+        name: odoo-{{ cliente }}
+        image: odoo
+        state: stopped
+        detach: true
+        pod: "{{ cliente }}"
 
-  - name: Apagar contenedor de BD
-    containers.podman.podman_container:
-      name: "db-{{ cliente }}"
-      image: postgres:13
-      state: stopped
-      pod: "{{ cliente }}"
+    - name: Eliminar contenedor de BD
+      containers.podman.podman_container:
+        name: db-{{ cliente }}
+        state: absent
+        pod: "{{ cliente }}"
 
-  - name: apagar contenedor de aplicaciones Odoo
-    containers.podman.podman_container:
-      name: "odoo-{{ cliente }}"
-      image: odoo
-      state: stopped
-      detach: true
-      pod: "{{ cliente }}"
+    - name: Eiminar contenedor de aplicaciones Odoo
+      containers.podman.podman_container:
+        name: odoo-{{ cliente }}
+        state: absent
+        pod: "{{ cliente }}"
 
-  - name: Eliminar contenedor de BD
-    containers.podman.podman_container:
-      name: "db-{{ cliente }}"
-      state: absent
-      pod: "{{ cliente }}"
+    - name: Eliminar pod para agrupar los contenedores
+      containers.podman.podman_pod:
+        name: "{{ cliente }}"
+        state: absent
 
-  - name: Eiminar contenedor de aplicaciones Odoo
-    containers.podman.podman_container:
-      name: "odoo-{{ cliente }}"
-      state: absent
-      pod: "{{ cliente }}"
+    - name: Realizar backup de la carpeta de la BD
+      ansible.builtin.copy:
+        remote_src: true
+        src: "{{ db_path }}"
+        dest: "{{ db_path }}_{{ansible_date_time.date}}"
 
-  - name: Eliminar pod para agrupar los contenedores
-    containers.podman.podman_pod:
-      name: "{{ cliente }}"
-      state: absent
+    - name: Eliminar carpeta de BD
+      ansible.builtin.file:
+        state: absent
+        path: "{{ db_path }}"
 
-  - name: Realizar backup de la carpeta de la BD
-    ansible.builtin.copy:
-      remote_src: true
-      src: "{{ db_path }}"
-      dest: "{{ db_path }}_{{ansible_date_time.date}}"
+    - name: Quitar el puerto {{ puerto }} en el firewall local de la maquina
+      ansible.posix.firewalld:
+        port: "{{ puerto }}/tcp"
+        permanent: true
+        immediate: true
+        state: disabled
 
-  - name: Eliminar carpeta de BD
-    ansible.builtin.file:
-      state: absent
-      path: "{{ db_path }}"
-
-  - name: Quitar el puerto {{ puerto }} en el firewall local de la maquina
-    ansible.posix.firewalld:
-      port: "{{ puerto }}/tcp"
-      permanent: true
-      immediate: true
-      state: disabled
-
-  - name: Mensaje
-    ansible.builtin.debug:
-      msg: Se eliminan los contenedores asociados con el cliente {{ cliente }}
+    - name: Mensaje
+      ansible.builtin.debug:
+        msg: Se eliminan los contenedores asociados con el cliente {{ cliente }}

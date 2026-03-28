@@ -1,3 +1,4 @@
+---
 - name: Create new volume named foo with a QoS limit
   purestorage.flasharray.purefa_volume:
     name: foo

@@ -1,17 +1,16 @@
 ---
 - name: Playbook inicio de contenedores Odoo
   hosts: all
-  gather_facts: no
+  gather_facts: false
   vars:
-    cliente: "redhat"
-    db_path: "/var/lib/{{ cliente }}"
+    cliente: redhat
+    db_path: /var/lib/{{ cliente }}
     puerto: 8171
   tasks:
+    - name: Gather info about specific pods
+      ansible.builtin.shell: podman  pod ps
+      register: podshell
 
-  - name: Gather info about specific pods
-    ansible.builtin.shell: podman  pod ps
-    register: podshell
-
-  - name: Print return information from the previous task
-    ansible.builtin.debug:
-      var: podshell.stdout_lines
+    - name: Print return information from the previous task
+      ansible.builtin.debug:
+        var: podshell.stdout_lines

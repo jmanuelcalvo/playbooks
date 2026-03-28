@@ -1,12 +1,11 @@
 ---
-- name: Creacion de recursos de Red 
+- name: Creacion de recursos de Red
   hosts: all
-  gather_facts: no
+  gather_facts: false
   tasks:
-  
-  - name: Validacion
-    ansible.builtin.debug:
-      msg: 
-      - Se creo de forma satisfactoria un Firewall con IP X.X.X.X
-      - Se creo de forma satisfactoria un Balanceador de carga Round robin para la IP X.X.X.X
-      - Se creo de forma satisfactoria un Pool de Red para las maquinas
+    - name: Validacion
+      ansible.builtin.debug:
+        msg:
+          - Se creo de forma satisfactoria un Firewall con IP X.X.X.X
+          - Se creo de forma satisfactoria un Balanceador de carga Round robin para la IP X.X.X.X
+          - Se creo de forma satisfactoria un Pool de Red para las maquinas
