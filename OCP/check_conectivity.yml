@@ -1,29 +1,16 @@
 ---
-- name: Validar conectividad con OpenShift desde AAP
+- name: Validar conectividad de red a OCP
   hosts: localhost
   gather_facts: false
-  
+
   tasks:
-    - name: Obtener información del clúster (Validación de API)
-      kubernetes.core.k8s_cluster_info:
-        # AAP inyectará automáticamente K8S_AUTH_TOKEN y K8S_AUTH_HOST
-        # desde la credencial vinculada al Job Template.
-      register: api_info
-      ignore_errors: false
+    - name: Verificar si el puerto 6443 está escuchando
+      ansible.builtin.wait_for:
+        host: api.rm2.thpm.p1.openshiftapps.com
+        port: 6443
+        timeout: 10
+        msg: "No hay conectividad al puerto 6443 de OpenShift"
 
-    - name: Mostrar versión de la API de OpenShift
+    - name: Confirmar éxito
       ansible.builtin.debug:
-        msg: 
-          - "Conexión exitosa a: {{ ansible_env.K8S_AUTH_HOST | default('URL definida en AAP') }}"
-          - "Versión de Kubernetes: {{ api_info.version.kubernetes.gitVersion }}"
-
-    - name: Listar proyectos (Opcional)
-      kubernetes.core.k8s_info:
-        kind: Project
-        api_version: project.openshift.io/v1
-      register: project_list
-      limit: 5
-
-    - name: Mostrar los primeros 5 proyectos
-      ansible.builtin.debug:
-        msg: "Proyectos encontrados: {{ project_list.resources | map(attribute='metadata.name') | list }}"
+        msg: "¡Conectividad de red confirmada!"
