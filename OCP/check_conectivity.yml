@@ -1,32 +1,29 @@
 ---
-- name: Validar conectividad desde AAP usando Credenciales
+- name: Validar conectividad con OpenShift desde AAP
   hosts: localhost
-  connection: local
   gather_facts: false
-
+  
   tasks:
-    - name: Consultar el endpoint de usuario (Whoami)
-      ansible.builtin.uri:
-        # AAP inyecta K8S_AUTH_HOST. Añadimos el path del API de usuario.
-        url: "{{ lookup('ansible.builtin.env', 'K8S_AUTH_HOST') }}/apis/user.openshift.io/v1/users/~"
-        method: GET
-        headers:
-          Authorization: "Bearer {{ lookup('ansible.builtin.env', 'K8S_AUTH_API_KEY') }}"
-        # Tomamos la preferencia de SSL de la credencial o desactivamos por seguridad
-        validate_certs: "{{ lookup('ansible.builtin.env', 'K8S_AUTH_VERIFY_SSL') | default(false, true) }}"
-        status_code: 200
-      register: ocp_response
-      ignore_errors: true
+    - name: Obtener información del clúster (Validación de API)
+      kubernetes.core.k8s_cluster_info:
+        # AAP inyectará automáticamente K8S_AUTH_TOKEN y K8S_AUTH_HOST
+        # desde la credencial vinculada al Job Template.
+      register: api_info
+      ignore_errors: false
 
-    - name: Resultado de la validación
+    - name: Mostrar versión de la API de OpenShift
       ansible.builtin.debug:
         msg: 
-          - "Conectividad: EXITOSA"
-          - "Usuario en OpenShift: {{ ocp_response.json.metadata.name }}"
-          - "URL conectada: {{ lookup('ansible.builtin.env', 'K8S_AUTH_HOST') }}"
-      when: ocp_response.status == 200
+          - "Conexión exitosa a: {{ ansible_env.K8S_AUTH_HOST | default('URL definida en AAP') }}"
+          - "Versión de Kubernetes: {{ api_info.version.kubernetes.gitVersion }}"
 
-    - name: Fallo de conectividad o configuración
-      ansible.builtin.fail:
-        msg: "No se pudo conectar. Verifica que la credencial esté asociada al Job Template en AAP."
-      when: ocp_response.status != 200
+    - name: Listar proyectos (Opcional)
+      kubernetes.core.k8s_info:
+        kind: Project
+        api_version: project.openshift.io/v1
+      register: project_list
+      limit: 5
+
+    - name: Mostrar los primeros 5 proyectos
+      ansible.builtin.debug:
+        msg: "Proyectos encontrados: {{ project_list.resources | map(attribute='metadata.name') | list }}"
