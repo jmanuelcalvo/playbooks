@@ -1,24 +1,32 @@
 ---
-- name: Validar conectividad con OpenShift
+- name: Validar conectividad desde AAP usando Credenciales
   hosts: localhost
   connection: local
   gather_facts: false
 
   tasks:
-    - name: Consultar las versiones del API (No requiere permisos de RBAC específicos)
-      kubernetes.core.k8s_info:
-        api_version: v1
-        kind: APIService
-      register: ocp_connection
+    - name: Consultar el endpoint de usuario (Whoami)
+      ansible.builtin.uri:
+        # AAP inyecta K8S_AUTH_HOST. Añadimos el path del API de usuario.
+        url: "{{ lookup('ansible.builtin.env', 'K8S_AUTH_HOST') }}/apis/user.openshift.io/v1/users/~"
+        method: GET
+        headers:
+          Authorization: "Bearer {{ lookup('ansible.builtin.env', 'K8S_AUTH_API_KEY') }}"
+        # Tomamos la preferencia de SSL de la credencial o desactivamos por seguridad
+        validate_certs: "{{ lookup('ansible.builtin.env', 'K8S_AUTH_VERIFY_SSL') | default(false, true) }}"
+        status_code: 200
+      register: ocp_response
       ignore_errors: true
 
-    - name: Verificar si el API respondió (aunque sea con error de permisos)
+    - name: Resultado de la validación
       ansible.builtin.debug:
-        msg: "¡Conexión exitosa! El API de OpenShift respondió correctamente."
-      # Si recibimos un error 403, significa que llegamos al clúster y nos autenticamos.
-      when: ocp_connection.resources is defined or (ocp_connection.msg is defined and '403' in ocp_connection.msg)
+        msg: 
+          - "Conectividad: EXITOSA"
+          - "Usuario en OpenShift: {{ ocp_response.json.metadata.name }}"
+          - "URL conectada: {{ lookup('ansible.builtin.env', 'K8S_AUTH_HOST') }}"
+      when: ocp_response.status == 200
 
-    - name: Reportar error total de red
+    - name: Fallo de conectividad o configuración
       ansible.builtin.fail:
-        msg: "No hay conectividad con el clúster. Revisa la URL y las credenciales en AAP."
-      when: ocp_connection.resources is not defined and (ocp_connection.msg is not defined or '403' not in ocp_connection.msg)
+        msg: "No se pudo conectar. Verifica que la credencial esté asociada al Job Template en AAP."
+      when: ocp_response.status != 200
