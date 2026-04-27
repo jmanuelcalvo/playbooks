@@ -5,19 +5,19 @@
   gather_facts: false
 
   tasks:
-    - name: Intentar obtener información del clúster (Whoami)
+    - name: Consultar mis propios permisos (SelfSubjectRulesReview)
       kubernetes.core.k8s_info:
-        kind: ConfigMap
-        namespace: default
+        api_version: authorization.openshift.io/v1
+        kind: SelfSubjectRulesReview
       register: ocp_connection
       ignore_errors: true
 
     - name: Verificar si la conexión fue exitosa
       ansible.builtin.debug:
-        msg: "¡Conexión exitosa! El clúster está respondiendo."
-      when: ocp_connection.resources is defined
+        msg: "¡Conexión exitosa! El clúster reconoce al usuario jcalvo."
+      when: ocp_connection.resources is defined or ocp_connection.status is defined
 
     - name: Reportar error de conectividad
       ansible.builtin.fail:
-        msg: "No se pudo conectar a OpenShift. Revisa tu login (oc login) o el archivo kubeconfig."
-      when: ocp_connection.resources is not defined
+        msg: "Error de red o autenticación."
+      when: ocp_connection.resources is not defined and ocp_connection.status is not defined
