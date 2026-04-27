@@ -5,19 +5,20 @@
   gather_facts: false
 
   tasks:
-    - name: Consultar mis propios permisos (SelfSubjectRulesReview)
+    - name: Consultar las versiones del API (No requiere permisos de RBAC específicos)
       kubernetes.core.k8s_info:
-        api_version: authorization.openshift.io/v1
-        kind: SelfSubjectRulesReview
+        api_version: v1
+        kind: APIService
       register: ocp_connection
       ignore_errors: true
 
-    - name: Verificar si la conexión fue exitosa
+    - name: Verificar si el API respondió (aunque sea con error de permisos)
       ansible.builtin.debug:
-        msg: "¡Conexión exitosa! El clúster reconoce al usuario jcalvo."
-      when: ocp_connection.resources is defined or ocp_connection.status is defined
+        msg: "¡Conexión exitosa! El API de OpenShift respondió correctamente."
+      # Si recibimos un error 403, significa que llegamos al clúster y nos autenticamos.
+      when: ocp_connection.resources is defined or (ocp_connection.msg is defined and '403' in ocp_connection.msg)
 
-    - name: Reportar error de conectividad
+    - name: Reportar error total de red
       ansible.builtin.fail:
-        msg: "Error de red o autenticación."
-      when: ocp_connection.resources is not defined and ocp_connection.status is not defined
+        msg: "No hay conectividad con el clúster. Revisa la URL y las credenciales en AAP."
+      when: ocp_connection.resources is not defined and (ocp_connection.msg is not defined or '403' not in ocp_connection.msg)
