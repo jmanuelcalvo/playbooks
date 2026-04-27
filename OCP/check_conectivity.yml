@@ -1,0 +1,23 @@
+---
+- name: Validar conectividad con OpenShift
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  tasks:
+    - name: Intentar obtener información del clúster (Whoami)
+      kubernetes.core.k8s_info:
+        kind: ConfigMap
+        namespace: default
+      register: ocp_connection
+      ignore_errors: true
+
+    - name: Verificar si la conexión fue exitosa
+      ansible.builtin.debug:
+        msg: "¡Conexión exitosa! El clúster está respondiendo."
+      when: ocp_connection.resources is defined
+
+    - name: Reportar error de conectividad
+      ansible.builtin.fail:
+        msg: "No se pudo conectar a OpenShift. Revisa tu login (oc login) o el archivo kubeconfig."
+      when: ocp_connection.resources is not defined
