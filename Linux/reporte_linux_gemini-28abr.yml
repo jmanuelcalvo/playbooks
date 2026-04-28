@@ -1,0 +1,40 @@
+---
+- name: Reporte de Salud del Sistema (RHEL)
+  hosts: all
+  become: true
+  vars:
+    servicio_a_validar: "sshd"
+    umbral_disco_percent: 80
+
+  tasks:
+    - name: Obtener información del servicio
+      ansible.builtin.systemd_info:
+        name: "{{ servicio_a_validar }}"
+      register: service_status
+
+    - name: Generar Reporte Formateado
+      ansible.builtin.debug:
+        msg: |
+          ============================================================
+          REPORTE DE ESTADO: {{ ansible_hostname | upper }}
+          ============================================================
+          
+          ESTADO DEL SERVICIO ({{ servicio_a_validar }}):
+          ------------------------------------------------------------
+          Estado:    {{ service_status.status.ActiveState | default('N/A') }}
+          SubEstado: {{ service_status.status.SubState | default('N/A') }}
+          
+          MEMORIA RAM:
+          ------------------------------------------------------------
+          Total:     {{ (ansible_memtotal_mb / 1024) | round(2) }} GB
+          Libre:     {{ (ansible_memfree_mb / 1024) | round(2) }} GB
+          En uso:    {{ ((ansible_memtotal_mb - ansible_memfree_mb) / 1024) | round(2) }} GB
+          
+          ALMACENAMIENTO (Partición Raíz):
+          ------------------------------------------------------------
+          Punto de Montaje: /
+          Tamaño Total:     {{ (ansible_mounts | selectattr('mount', 'equalto', '/') | list | first).size_total | human_readable }}
+          Espacio Libre:    {{ (ansible_mounts | selectattr('mount', 'equalto', '/') | list | first).size_available | human_readable }}
+          Uso de Disco:     {{ (100 * ((ansible_mounts | selectattr('mount', 'equalto', '/') | list | first).size_total - (ansible_mounts | selectattr('mount', 'equalto', '/') | list | first).size_available) / (ansible_mounts | selectattr('mount', 'equalto', '/') | list | first).size_total) | round(1) }}%
+          
+          ============================================================
