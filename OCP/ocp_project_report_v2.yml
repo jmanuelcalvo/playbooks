@@ -14,40 +14,64 @@
         kind: Pod
         namespace: "{{ ocp_namespace }}"
       register: pods_info
+      failed_when: false
 
     - name: Get Deployments
       kubernetes.core.k8s_info:
         kind: Deployment
         namespace: "{{ ocp_namespace }}"
       register: deployments_info
+      failed_when: false
 
     - name: Get Services
       kubernetes.core.k8s_info:
         kind: Service
         namespace: "{{ ocp_namespace }}"
       register: services_info
+      failed_when: false
 
-    - name: Calculate health metrics
+    - name: Calculate pod metrics
       set_fact:
-        total_pods: "{{ pods_info.resources | length }}"
-        running_pods: "{{ pods_info.resources | selectattr('status.phase','equalto','Running') | list | length }}"
+        total_pods: "{{ pods_info.resources | length if pods_info.resources is defined else 0 }}"
+        running_pods: >-
+          {{
+            pods_info.resources
+            | selectattr('status.phase','equalto','Running')
+            | list | length
+            if pods_info.resources is defined else 0
+          }}
+
+    - name: Calculate failed pods
+      set_fact:
         failed_pods: "{{ total_pods | int - running_pods | int }}"
+
+    - name: Normalize counts
+      set_fact:
+        deployment_count: "{{ deployments_info.resources | length if deployments_info.resources is defined else 'N/A' }}"
+        service_count: "{{ services_info.resources | length if services_info.resources is defined else 'N/A' }}"
 
     - name: Define namespace status
       set_fact:
-        namespace_status: "{{ '🟢 Healthy' if failed_pods|int == 0 else '🔴 Issues' }}"
+        namespace_status: >-
+          {% if failed_pods|int > 0 %}
+          🔴 Issues
+          {% elif deployment_count == 'N/A' %}
+          🟡 Limited Access
+          {% else %}
+          🟢 Healthy
+          {% endif %}
 
     - name: Build namespace summary
       set_fact:
         namespace_summary: |
           {{ namespace_status }} **{{ ocp_namespace }}**
-          Pods: {{ running_pods }}/{{ total_pods }} | Deployments: {{ deployments_info.resources | length }} | Services: {{ services_info.resources | length }}
+          Pods: {{ running_pods }}/{{ total_pods }} | Deployments: {{ deployment_count }} | Services: {{ service_count }}
 
 # ==========================================================
 # 🔥 CONSOLIDACIÓN
 # ==========================================================
 
-- name: Consolidated Report
+- name: Consolidated OpenShift Report
   hosts: localhost
   gather_facts: false
 
@@ -56,13 +80,13 @@
 
   tasks:
 
-    - name: Build consolidated message
+    - name: Build consolidated report
       set_fact:
         final_message: |
           ## 🚀 OpenShift Cluster Summary
 
           {% for host in groups[group_name] %}
-          {{ hostvars[host].namespace_summary }}
+          {{ hostvars[host].namespace_summary | default('No data') }}
           {% endfor %}
 
           ---
