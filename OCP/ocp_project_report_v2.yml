@@ -30,6 +30,45 @@
       register: services_info
       failed_when: false
 
+    - name: Get Routes
+      kubernetes.core.k8s_info:
+        api_version: route.openshift.io/v1
+        kind: Route
+        namespace: "{{ ocp_namespace }}"
+      register: routes_info
+      failed_when: false
+
+    - name: Get PVCs
+      kubernetes.core.k8s_info:
+        kind: PersistentVolumeClaim
+        namespace: "{{ ocp_namespace }}"
+      register: pvc_info
+      failed_when: false
+
+    - name: Get PVs (cluster-level)
+      kubernetes.core.k8s_info:
+        kind: PersistentVolume
+      register: pv_info
+      failed_when: false
+
+    - name: Get ConfigMaps
+      kubernetes.core.k8s_info:
+        kind: ConfigMap
+        namespace: "{{ ocp_namespace }}"
+      register: configmaps_info
+      failed_when: false
+
+    - name: Get Secrets
+      kubernetes.core.k8s_info:
+        kind: Secret
+        namespace: "{{ ocp_namespace }}"
+      register: secrets_info
+      failed_when: false
+
+    # =========================
+    # 📊 MÉTRICAS
+    # =========================
+
     - name: Calculate pod metrics
       set_fact:
         total_pods: "{{ pods_info.resources | length if pods_info.resources is defined else 0 }}"
@@ -49,6 +88,11 @@
       set_fact:
         deployment_count: "{{ deployments_info.resources | length if deployments_info.resources is defined else 'N/A' }}"
         service_count: "{{ services_info.resources | length if services_info.resources is defined else 'N/A' }}"
+        route_count: "{{ routes_info.resources | length if routes_info.resources is defined else 'N/A' }}"
+        pvc_count: "{{ pvc_info.resources | length if pvc_info.resources is defined else 'N/A' }}"
+        pv_count: "{{ pv_info.resources | length if pv_info.resources is defined else 'N/A' }}"
+        configmap_count: "{{ configmaps_info.resources | length if configmaps_info.resources is defined else 'N/A' }}"
+        secret_count: "{{ secrets_info.resources | length if secrets_info.resources is defined else 'N/A' }}"
 
     - name: Define namespace status
       set_fact:
@@ -65,7 +109,11 @@
       set_fact:
         namespace_summary: |
           {{ namespace_status }} **{{ ocp_namespace }}**
-          Pods: {{ running_pods }}/{{ total_pods }} | Deployments: {{ deployment_count }} | Services: {{ service_count }}
+
+          Pods: {{ running_pods }}/{{ total_pods }}
+          Deployments: {{ deployment_count }} | Services: {{ service_count }}
+          Routes: {{ route_count }} | PVCs: {{ pvc_count }} | PVs: {{ pv_count }}
+          ConfigMaps: {{ configmap_count }} | Secrets: {{ secret_count }}
 
 # ==========================================================
 # 🔥 CONSOLIDACIÓN
