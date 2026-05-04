@@ -1,0 +1,112 @@
+---
+- name: OpenShift Namespace Pretty Report
+  hosts: localhost
+  gather_facts: false
+
+  vars:
+    namespace: "{{ target_namespace }}"
+
+  tasks:
+
+    - name: Get Pods
+      kubernetes.core.k8s_info:
+        kind: Pod
+        namespace: "{{ namespace }}"
+      register: pods_info
+
+    - name: Get Deployments
+      kubernetes.core.k8s_info:
+        kind: Deployment
+        namespace: "{{ namespace }}"
+      register: deployments_info
+
+    - name: Get Services
+      kubernetes.core.k8s_info:
+        kind: Service
+        namespace: "{{ namespace }}"
+      register: services_info
+
+    - name: Get Routes (OpenShift)
+      kubernetes.core.k8s_info:
+        api_version: route.openshift.io/v1
+        kind: Route
+        namespace: "{{ namespace }}"
+      register: routes_info
+
+    - name: Get ConfigMaps
+      kubernetes.core.k8s_info:
+        kind: ConfigMap
+        namespace: "{{ namespace }}"
+      register: configmaps_info
+
+    - name: Get PVCs
+      kubernetes.core.k8s_info:
+        kind: PersistentVolumeClaim
+        namespace: "{{ namespace }}"
+      register: pvc_info
+
+    - name: Build pretty report
+      set_fact:
+        report: |
+
+          ==================================================
+          🚀 OPENSHIFT NAMESPACE REPORT
+          ==================================================
+          Namespace: {{ namespace }}
+          ==================================================
+
+          📦 PODS ({{ pods_info.resources | length }})
+          --------------------------------------------------
+          {% for pod in pods_info.resources %}
+          • {{ "%-30s"|format(pod.metadata.name) }} | {{ "%-10s"|format(pod.status.phase) }} | Node: {{ pod.spec.nodeName | default('N/A') }}
+          {% else %}
+          No pods found
+          {% endfor %}
+
+          ⚙️ DEPLOYMENTS ({{ deployments_info.resources | length }})
+          --------------------------------------------------
+          {% for dep in deployments_info.resources %}
+          • {{ "%-30s"|format(dep.metadata.name) }} | Replicas: {{ dep.spec.replicas }} | Available: {{ dep.status.availableReplicas | default(0) }}
+          {% else %}
+          No deployments found
+          {% endfor %}
+
+          🌐 SERVICES ({{ services_info.resources | length }})
+          --------------------------------------------------
+          {% for svc in services_info.resources %}
+          • {{ "%-30s"|format(svc.metadata.name) }} | {{ "%-10s"|format(svc.spec.type) }} | {{ svc.spec.clusterIP }}
+          {% else %}
+          No services found
+          {% endfor %}
+
+          🌍 ROUTES ({{ routes_info.resources | length }})
+          --------------------------------------------------
+          {% for route in routes_info.resources %}
+          • {{ "%-30s"|format(route.metadata.name) }} | Host: {{ route.spec.host }} | Path: {{ route.spec.path | default('/') }}
+          {% else %}
+          No routes found
+          {% endfor %}
+
+          🧾 CONFIGMAPS ({{ configmaps_info.resources | length }})
+          --------------------------------------------------
+          {% for cm in configmaps_info.resources %}
+          • {{ "%-30s"|format(cm.metadata.name) }} | Keys: {{ cm.data.keys() | list | length if cm.data is defined else 0 }}
+          {% else %}
+          No configmaps found
+          {% endfor %}
+
+          💾 PVCs ({{ pvc_info.resources | length }})
+          --------------------------------------------------
+          {% for pvc in pvc_info.resources %}
+          • {{ "%-30s"|format(pvc.metadata.name) }} | Status: {{ pvc.status.phase }} | Size: {{ pvc.spec.resources.requests.storage }}
+          {% else %}
+          No PVCs found
+          {% endfor %}
+
+          ==================================================
+          ✅ END OF REPORT
+          ==================================================
+
+    - name: Show report in AAP output
+      debug:
+        msg: "{{ report }}"
