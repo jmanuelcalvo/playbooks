@@ -1,0 +1,115 @@
+---
+- name: OpenShift Per-Namespace Report
+  hosts: openshift_namespaces
+  gather_facts: false
+
+  vars:
+    namespace: "{{ inventory_hostname }}"
+
+  tasks:
+
+    - name: Get Pods
+      kubernetes.core.k8s_info:
+        kind: Pod
+        namespace: "{{ namespace }}"
+      register: pods_info
+
+    - name: Get Deployments
+      kubernetes.core.k8s_info:
+        kind: Deployment
+        namespace: "{{ namespace }}"
+      register: deployments_info
+
+    - name: Get Services
+      kubernetes.core.k8s_info:
+        kind: Service
+        namespace: "{{ namespace }}"
+      register: services_info
+
+    - name: Get Routes (OpenShift)
+      kubernetes.core.k8s_info:
+        api_version: route.openshift.io/v1
+        kind: Route
+        namespace: "{{ namespace }}"
+      register: routes_info
+
+    - name: Get ConfigMaps
+      kubernetes.core.k8s_info:
+        kind: ConfigMap
+        namespace: "{{ namespace }}"
+      register: configmaps_info
+
+    - name: Get PVCs
+      kubernetes.core.k8s_info:
+        kind: PersistentVolumeClaim
+        namespace: "{{ namespace }}"
+      register: pvc_info
+
+    - name: Build namespace report
+      set_fact:
+        namespace_report: |
+          
+          ==================================================
+          🚀 Namespace: {{ namespace }}
+          ==================================================
+
+          📦 Pods: {{ pods_info.resources | length }}
+          ⚙️ Deployments: {{ deployments_info.resources | length }}
+          🌐 Services: {{ services_info.resources | length }}
+          🌍 Routes: {{ routes_info.resources | length }}
+          🧾 ConfigMaps: {{ configmaps_info.resources | length }}
+          💾 PVCs: {{ pvc_info.resources | length }}
+
+          {% for pod in pods_info.resources %}
+          - {{ pod.metadata.name }} → {{ pod.status.phase }}
+          {% endfor %}
+
+
+# ==========================================================
+# 🔥 CONSOLIDACIÓN
+# ==========================================================
+
+- name: Consolidated OpenShift Report
+  hosts: localhost
+  gather_facts: false
+
+  vars:
+    namespaces_group: "openshift_namespaces"
+
+  tasks:
+
+    - name: Build final consolidated report
+      set_fact:
+        final_report: |
+
+          ==================================================
+          🚀 OPENSHIFT CONSOLIDATED REPORT
+          ==================================================
+
+          Total Namespaces: {{ groups[namespaces_group] | length }}
+
+          {% for host in groups[namespaces_group] %}
+          {{ hostvars[host].namespace_report | default('No data available') }}
+          --------------------------------------------------
+          {% endfor %}
+
+          ==================================================
+          ✅ END OF REPORT
+          ==================================================
+
+    - name: Show consolidated report
+      debug:
+        msg: "{{ final_report }}"
+
+    # 🔥 OPCIONAL: enviar a Mattermost
+    - name: Send consolidated report to Mattermost
+      uri:
+        url: "{{ mattermost_webhook_url }}"
+        method: POST
+        body_format: json
+        body:
+          text: "{{ final_report }}"
+        headers:
+          Content-Type: "application/json"
+        status_code: 200
+      when: mattermost_webhook_url is defined
