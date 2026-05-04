@@ -1,4 +1,5 @@
-- name: OpenShift Per-Namespace Report
+---
+- name: OpenShift Namespace Pretty Report
   hosts: openshift_namespaces
   gather_facts: false
   connection: local
@@ -25,3 +26,84 @@
         kind: Service
         namespace: "{{ ocp_namespace }}"
       register: services_info
+
+    - name: Get Routes (OpenShift)
+      kubernetes.core.k8s_info:
+        api_version: route.openshift.io/v1
+        kind: Route
+        namespace: "{{ ocp_namespace }}"
+      register: routes_info
+
+    - name: Get ConfigMaps
+      kubernetes.core.k8s_info:
+        kind: ConfigMap
+        namespace: "{{ ocp_namespace }}"
+      register: configmaps_info
+
+    - name: Get PVCs
+      kubernetes.core.k8s_info:
+        kind: PersistentVolumeClaim
+        namespace: "{{ ocp_namespace }}"
+      register: pvc_info
+
+    - name: Build pretty report
+      set_fact:
+        report: |
+
+          ==================================================
+          🚀 OPENSHIFT NAMESPACE REPORT
+          ==================================================
+          Namespace: {{ ocp_namespace }}
+          ==================================================
+
+          📦 PODS ({{ pods_info.resources | length }})
+          --------------------------------------------------
+          {% for pod in pods_info.resources %}
+          • {{ "%-30s"|format(pod.metadata.name) }} | {{ "%-10s"|format(pod.status.phase) }}
+          {% else %}
+          No pods found
+          {% endfor %}
+
+          ⚙️ DEPLOYMENTS ({{ deployments_info.resources | length }})
+          --------------------------------------------------
+          {% for dep in deployments_info.resources %}
+          • {{ dep.metadata.name }} | Replicas: {{ dep.spec.replicas }}
+          {% else %}
+          No deployments found
+          {% endfor %}
+
+          🌐 SERVICES ({{ services_info.resources | length }})
+          --------------------------------------------------
+          {% for svc in services_info.resources %}
+          • {{ svc.metadata.name }} | {{ svc.spec.type }}
+          {% else %}
+          No services found
+          {% endfor %}
+
+          🌍 ROUTES ({{ routes_info.resources | length }})
+          --------------------------------------------------
+          {% for route in routes_info.resources %}
+          • {{ route.metadata.name }} | {{ route.spec.host }}
+          {% else %}
+          No routes found
+          {% endfor %}
+
+          🧾 CONFIGMAPS ({{ configmaps_info.resources | length }})
+          --------------------------------------------------
+          {% for cm in configmaps_info.resources %}
+          • {{ cm.metadata.name }}
+          {% else %}
+          No configmaps found
+          {% endfor %}
+
+          💾 PVCs ({{ pvc_info.resources | length }})
+          --------------------------------------------------
+          {% for pvc in pvc_info.resources %}
+          • {{ pvc.metadata.name }} | {{ pvc.status.phase }}
+          {% else %}
+          No PVCs found
+          {% endfor %}
+
+    - name: Show report in AAP output
+      debug:
+        msg: "{{ report }}"
