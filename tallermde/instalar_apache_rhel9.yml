@@ -1,0 +1,29 @@
+---
+- name: Instalar y validar Apache en RHEL 9
+  hosts: all
+  become: true
+
+  tasks:
+
+    - name: Instalar paquete httpd
+      ansible.builtin.dnf:
+        name: httpd
+        state: present
+
+    - name: Habilitar e iniciar servicio httpd
+      ansible.builtin.service:
+        name: httpd
+        state: started
+        enabled: true
+
+    - name: Verificar estado del servicio httpd
+      ansible.builtin.systemd:
+        name: httpd
+      register: apache_status
+
+    - name: Mostrar resultado del servicio
+      ansible.builtin.debug:
+        msg:
+          - "Servicio: {{ apache_status.status.Id }}"
+          - "Estado: {{ apache_status.status.ActiveState }}"
+          - "Subestado: {{ apache_status.status.SubState }}"
