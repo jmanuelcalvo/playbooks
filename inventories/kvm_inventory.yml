@@ -1,4 +1,4 @@
-plugin: community.libvirt.libvirt
+plugin: yaml
 
 uri: "qemu+ssh://root@up.jmanuelcalvo.com/system"
 
