@@ -1,4 +1,4 @@
-plugin: yaml
+plugin: community.libvirt.libvirt_inventory
 
 uri: "qemu+ssh://root@up.jmanuelcalvo.com/system"
 
@@ -12,6 +12,3 @@ groups:
 keyed_groups:
   - key: state
     prefix: vm_state
-
-  - key: hypervisor
-    prefix: kvm
