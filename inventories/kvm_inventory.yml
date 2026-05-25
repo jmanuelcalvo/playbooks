@@ -1,0 +1,17 @@
+plugin: community.libvirt.libvirt
+
+uri: "qemu+ssh://root@up.jmanuelcalvo.com/system"
+
+compose:
+  ansible_host: interfaces[0].addresses[0]
+
+groups:
+  running: state == "running"
+  stopped: state != "running"
+
+keyed_groups:
+  - key: state
+    prefix: vm_state
+
+  - key: hypervisor
+    prefix: kvm
