@@ -1,0 +1,30 @@
+---
+- name: Validar estado de un servicio Windows
+  hosts: os_windows
+  gather_facts: false
+
+  vars:
+    service_name: Spooler
+
+  tasks:
+
+    - name: Obtener informacion del servicio
+      ansible.windows.win_service_info:
+        name: "{{ service_name }}"
+      register: service_info
+
+    - name: Mostrar estado del servicio
+      debug:
+        msg: >
+          El servicio {{ service_name }} se encuentra
+          {{ service_info.services[0].state }}
+
+    - name: Validar si el servicio esta corriendo
+      debug:
+        msg: "✅ El servicio está en ejecución"
+      when: service_info.services[0].state == "running"
+
+    - name: Validar si el servicio NO esta corriendo
+      debug:
+        msg: "❌ El servicio NO está en ejecución"
+      when: service_info.services[0].state != "running"
