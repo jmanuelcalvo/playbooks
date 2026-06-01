@@ -1,4 +1,10 @@
 ---
+- name: Establecer timestamp único para esta ejecución
+  ansible.builtin.set_fact:
+    ocp_run_timestamp: "{{ lookup('pipe', 'date +%Y%m%d_%H%M%S') }}"
+  run_once: true
+  tags: [always]
+
 - name: Cargar variables de entorno de autenticación K8s
   ansible.builtin.set_fact:
     k8s_auth:

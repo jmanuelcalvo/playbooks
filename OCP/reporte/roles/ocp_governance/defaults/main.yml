@@ -18,8 +18,8 @@ ocp_resources_to_query:
   - { label: "ServiceAccounts", api_version: "v1",                    kind: "ServiceAccount" }
   - { label: "NetworkPolicies", api_version: "networking.k8s.io/v1",  kind: "NetworkPolicy" }
 
-# Generar timestamp para historización (ISO 8601 compacto)
-ocp_timestamp: "{{ lookup('pipe', 'date +%Y%m%d_%H%M%S') }}"
+# Timestamp para historización (se toma de la fact generada en tasks/main.yml)
+ocp_timestamp: "{{ ocp_run_timestamp | default('manual_run') }}"
 
 # Rutas de reportes (incluyen el timestamp en el nombre)
 ocp_report_html_path: "/tmp/ocp_reporte_{{ ocp_timestamp }}.html"
