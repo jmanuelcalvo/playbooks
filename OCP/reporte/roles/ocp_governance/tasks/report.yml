@@ -26,16 +26,36 @@
     src: "{{ ocp_report_html_path }}"
   register: html_content_encoded
 
-- name: Copiar reportes al host remoto {{ ocp_remote_report_host }}
+- name: Verificar si el host remoto está en el inventario
+  ansible.builtin.set_fact:
+    remote_host_exists: "{{ ocp_remote_report_host in groups['all'] }}"
+
+- name: Copiar reporte HTML al host remoto {{ ocp_remote_report_host }}
   ansible.builtin.copy:
-    src: "{{ item.src }}"
-    dest: "{{ item.dest }}"
+    content: "{{ html_global }}"
+    dest: "/tmp/{{ ocp_report_html_path | basename }}"
     mode: '0644'
-  loop:
-    - { src: "{{ ocp_report_html_path }}", dest: "/tmp/{{ ocp_report_html_path | basename }}" }
-    - { src: "{{ ocp_report_csv_path }}", dest: "/tmp/{{ ocp_report_csv_path | basename }}" }
   delegate_to: "{{ ocp_remote_report_host }}"
-  when: ocp_remote_report_host in groups['all']
+  when: remote_host_exists
+  ignore_unreachable: true
+
+- name: Generar contenido CSV para exportación
+  ansible.builtin.set_fact:
+    csv_global: "{{ lookup('template', 'report.csv.j2') }}"
+
+- name: Copiar reporte CSV al host remoto {{ ocp_remote_report_host }}
+  ansible.builtin.copy:
+    content: "{{ csv_global }}"
+    dest: "/tmp/{{ ocp_report_csv_path | basename }}"
+    mode: '0644'
+  delegate_to: "{{ ocp_remote_report_host }}"
+  when: remote_host_exists
+  ignore_unreachable: true
+
+- name: Aviso si no se pudo exportar al host remoto
+  ansible.builtin.debug:
+    msg: "AVISO: El host {{ ocp_remote_report_host }} no está en el inventario o no es alcanzable. El reporte solo estará disponible en los Artifacts de AAP."
+  when: not remote_host_exists
 
 - name: Publicar resultados en AAP (Artifacts)
   ansible.builtin.set_stats:
