@@ -1,0 +1,24 @@
+---
+- name: OCP | Reporte de Gobernanza por Namespace
+  hosts: localhost
+  connection: local
+  gather_facts: true
+  roles:
+    - role: ocp_governance
+      tags: [governance]
+
+- name: OCP | Recolección de Datos en Namespaces
+  hosts: ns_targets
+  connection: local
+  gather_facts: false
+  roles:
+    - role: ocp_governance
+      tags: [governance]
+
+- name: OCP | Consolidación y Generación de Reportes
+  hosts: localhost
+  connection: local
+  gather_facts: true
+  roles:
+    - role: ocp_governance
+      tags: [governance]

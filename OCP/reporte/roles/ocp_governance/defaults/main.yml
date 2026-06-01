@@ -1,0 +1,29 @@
+---
+# Configuración por defecto para el rol
+ocp_exclude_regex: '^(openshift|kube|default)(-|$)'
+ocp_include_regex: ''
+
+# Recursos a consultar en cada namespace
+ocp_resources_to_query:
+  - { label: "Pods",            api_version: "v1",                    kind: "Pod" }
+  - { label: "Services",        api_version: "v1",                    kind: "Service" }
+  - { label: "Routes",          api_version: "route.openshift.io/v1", kind: "Route" }
+  - { label: "Deployments",     api_version: "apps/v1",               kind: "Deployment" }
+  - { label: "StatefulSets",    api_version: "apps/v1",               kind: "StatefulSet" }
+  - { label: "DaemonSets",      api_version: "apps/v1",               kind: "DaemonSet" }
+  - { label: "Jobs",            api_version: "batch/v1",              kind: "Job" }
+  - { label: "CronJobs",        api_version: "batch/v1",              kind: "CronJob" }
+  - { label: "ConfigMaps",      api_version: "v1",                    kind: "ConfigMap" }
+  - { label: "PVC",             api_version: "v1",                    kind: "PersistentVolumeClaim" }
+  - { label: "ServiceAccounts", api_version: "v1",                    kind: "ServiceAccount" }
+  - { label: "NetworkPolicies", api_version: "networking.k8s.io/v1",  kind: "NetworkPolicy" }
+
+# Generar timestamp para historización (ISO 8601 compacto)
+ocp_timestamp: "{{ lookup('pipe', 'date +%Y%m%d_%H%M%S') }}"
+
+# Rutas de reportes (incluyen el timestamp en el nombre)
+ocp_report_html_path: "/tmp/ocp_reporte_{{ ocp_timestamp }}.html"
+ocp_report_csv_path: "/tmp/ocp_auditoria_{{ ocp_timestamp }}.csv"
+
+# Host de destino para los reportes
+ocp_remote_report_host: "apvbtansible"

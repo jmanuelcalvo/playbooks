@@ -1,0 +1,30 @@
+
+================================================================================
+ERROR LOGGED: 2026-05-26T13:41:44.749Z
+================================================================================
+Error Name: Error
+Error Message: Missing authorization code
+
+Stack Trace:
+Error: Missing authorization code
+    at Server.<anonymous> (file:///opt/homebrew/lib/node_modules/bobshell/bundle/bob.js:2088:209)
+    at Server.emit (node:events:508:20)
+    at parserOnIncoming (node:_http_server:1207:12)
+    at HTTPParser.parserOnHeadersComplete (node:_http_common:125:17)
+================================================================================
+
+
+================================================================================
+ERROR LOGGED: 2026-05-26T13:44:13.474Z
+================================================================================
+Error Name: Error
+Error Message: Missing authorization code
+
+Stack Trace:
+Error: Missing authorization code
+    at Server.<anonymous> (file:///opt/homebrew/lib/node_modules/bobshell/bundle/bob.js:2088:209)
+    at Server.emit (node:events:508:20)
+    at parserOnIncoming (node:_http_server:1207:12)
+    at HTTPParser.parserOnHeadersComplete (node:_http_common:125:17)
+================================================================================
+

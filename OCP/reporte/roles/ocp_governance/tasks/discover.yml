@@ -1,0 +1,32 @@
+---
+- name: Listar namespaces del cluster
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Namespace
+    host: "{{ k8s_auth.host | default(omit) }}"
+    api_key: "{{ k8s_auth.api_key | default(omit) }}"
+    ca_cert: "{{ k8s_auth.ca_cert | default(omit) }}"
+    validate_certs: "{{ k8s_auth.validate_certs }}"
+    kubeconfig: "{{ k8s_auth.kubeconfig | default(omit) }}"
+  register: ns_all
+
+- name: Filtrar namespaces objetivo
+  ansible.builtin.set_fact:
+    namespaces_targets: >-
+      {{
+        ns_all.resources
+        | map(attribute='metadata.name')
+        | reject('match', ocp_exclude_regex)
+        | list
+      }}
+
+- name: Aplicar filtro de inclusión si está definido
+  ansible.builtin.set_fact:
+    namespaces_targets: "{{ namespaces_targets | select('match', ocp_include_regex) | list }}"
+  when: ocp_include_regex | length > 0
+
+- name: Crear inventario dinámico para procesamiento paralelo
+  ansible.builtin.add_host:
+    name: "{{ item }}"
+    groups: ns_targets
+  loop: "{{ namespaces_targets }}"

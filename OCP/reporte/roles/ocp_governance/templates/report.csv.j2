@@ -1,0 +1,4 @@
+namespace,criticidad,dt_owner,node_selector,missing_criticidad,missing_dt_owner,missing_node_selector
+{% for item in ocp_full_report | sort(attribute='namespace') %}
+{{ item.namespace }},"{{ item.gov.criticidad }}","{{ item.gov.dt_owner }}","{{ item.gov.node_selector }}",{{ item.missing.criticidad }},{{ item.missing.dt_owner }},{{ item.missing.node_selector }}
+{% endfor %}

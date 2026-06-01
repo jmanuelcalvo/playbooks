@@ -1,0 +1,26 @@
+---
+- name: Cargar variables de entorno de autenticación K8s
+  ansible.builtin.set_fact:
+    k8s_auth:
+      host: "{{ lookup('env', 'K8S_AUTH_HOST') | default(omit, true) }}"
+      api_key: "{{ lookup('env', 'K8S_AUTH_API_KEY') | default(omit, true) }}"
+      ca_cert: "{{ lookup('env', 'K8S_AUTH_SSL_CA_CERT') | default(omit, true) }}"
+      validate_certs: "{{ lookup('env', 'K8S_AUTH_VERIFY_SSL') | default('true', true) | bool }}"
+      kubeconfig: "{{ lookup('env', 'K8S_AUTH_KUBECONFIG') | default(omit, true) }}"
+  no_log: true
+  tags: [always]
+
+- name: Ejecutar fase de descubrimiento
+  ansible.builtin.include_tasks: discover.yml
+  when: inventory_hostname == 'localhost'
+  tags: [discover]
+
+- name: Ejecutar fase de recolección
+  ansible.builtin.include_tasks: collect.yml
+  when: inventory_hostname in groups['ns_targets'] | default([])
+  tags: [collect]
+
+- name: Ejecutar fase de reporte
+  ansible.builtin.include_tasks: report.yml
+  when: inventory_hostname == 'localhost' and groups['ns_targets'] | default([]) | length > 0
+  tags: [report]

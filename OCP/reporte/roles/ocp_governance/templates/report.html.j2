@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Reporte OCP por Namespace</title>
+  <style>
+    body { font-family: 'Segoe UI', Arial, sans-serif; background:#f4f6f8; margin:0; color: #333; }
+    .header { background:#0b3d91; color:white; padding:20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .container { padding:20px; max-width: 1200px; margin: auto; }
+    .card { background:white; margin-bottom:20px; padding:20px; border-radius:8px; box-shadow:0 2px 5px rgba(0,0,0,0.08); }
+    table { width:100%; border-collapse: collapse; margin-top:12px; }
+    th { background:#0b3d91; color:white; }
+    td, th { padding:12px; border-bottom:1px solid #eee; text-align:left; }
+    tr:hover { background:#f9fafb; }
+    .badge { padding:4px 10px; border-radius:12px; font-size:12px; font-weight: 600; }
+    .badge-ok { background:#dcfce7; color:#166534; }
+    .badge-bad { background:#fee2e2; color:#991b1b; }
+    code { background:#f1f5f9; padding:3px 6px; border-radius:4px; font-family: monospace; }
+    .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+    .summary-item { text-align: center; }
+    .summary-value { font-size: 24px; font-weight: bold; color: #0b3d91; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>✅ Reporte de Gobernanza OCP</h1>
+    <div>Generado el: {{ ansible_date_time.iso8601 if ansible_date_time is defined else now().isoformat() }}</div>
+  </div>
+
+  <div class="container">
+    <div class="card">
+      <h3>Resumen General</h3>
+      <div class="summary-grid">
+        <div class="summary-item">
+          <div class="summary-value">{{ ocp_full_report | length }}</div>
+          <div>Namespaces Procesados</div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-value">{{ ocp_full_report | selectattr('missing.criticidad') | list | length }}</div>
+          <div>Sin Criticidad</div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-value">{{ ocp_full_report | selectattr('missing.dt_owner') | list | length }}</div>
+          <div>Sin DT Owner</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Detalle de Cumplimiento</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Namespace</th>
+            <th>Criticidad</th>
+            <th>DT Owner</th>
+            <th>Node Selector</th>
+            <th>Recursos</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in ocp_full_report | sort(attribute='namespace') %}
+          <tr>
+            <td><code>{{ item.namespace }}</code></td>
+            <td>
+              {% if not item.missing.criticidad %}
+                <span class="badge badge-ok">{{ item.gov.criticidad }}</span>
+              {% else %}
+                <span class="badge badge-bad">Faltante</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if not item.missing.dt_owner %}
+                <span class="badge badge-ok">{{ item.gov.dt_owner }}</span>
+              {% else %}
+                <span class="badge badge-bad">Faltante</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if not item.missing.node_selector %}
+                <code>{{ item.gov.node_selector }}</code>
+              {% else %}
+                <span class="badge badge-bad">Faltante</span>
+              {% endif %}
+            </td>
+            <td>
+              <details>
+                <summary>Ver conteos</summary>
+                <ul>
+                {% for res in item.resumen %}
+                  <li>{{ res.recurso }}: {{ res.cantidad }}</li>
+                {% endfor %}
+                </ul>
+              </details>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</body>
+</html>

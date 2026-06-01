@@ -1,0 +1,46 @@
+---
+- name: Consolidar datos de todos los namespaces
+  ansible.builtin.set_fact:
+    ocp_full_report: >-
+      {{
+        groups['ns_targets']
+        | map('extract', hostvars, 'ns_data')
+        | select('defined')
+        | list
+      }}
+
+- name: Generar reporte HTML
+  ansible.builtin.template:
+    src: report.html.j2
+    dest: "{{ ocp_report_html_path }}"
+    mode: '0644'
+
+- name: Generar reporte CSV
+  ansible.builtin.template:
+    src: report.csv.j2
+    dest: "{{ ocp_report_csv_path }}"
+    mode: '0644'
+
+- name: Leer contenido del HTML para exportar a AAP
+  ansible.builtin.slurp:
+    src: "{{ ocp_report_html_path }}"
+  register: html_content_encoded
+
+- name: Copiar reportes al host remoto {{ ocp_remote_report_host }}
+  ansible.builtin.copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    mode: '0644'
+  loop:
+    - { src: "{{ ocp_report_html_path }}", dest: "/tmp/{{ ocp_report_html_path | basename }}" }
+    - { src: "{{ ocp_report_csv_path }}", dest: "/tmp/{{ ocp_report_csv_path | basename }}" }
+  delegate_to: "{{ ocp_remote_report_host }}"
+  when: ocp_remote_report_host in groups['all']
+
+- name: Publicar resultados en AAP (Artifacts)
+  ansible.builtin.set_stats:
+    data:
+      reporte_html_raw: "{{ html_content_encoded.content | b64decode }}"
+      archivo_html_generado: "{{ ocp_report_html_path | basename }}"
+      archivo_csv_generado: "{{ ocp_report_csv_path | basename }}"
+      timestamp: "{{ ocp_timestamp }}"
