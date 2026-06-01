@@ -36,8 +36,22 @@
     dest: "/tmp/{{ ocp_report_html_path | basename }}"
     mode: '0644'
   delegate_to: "{{ ocp_remote_report_host }}"
+  register: remote_copy_html
   when: remote_host_exists
-  ignore_unreachable: true
+
+- name: Validar existencia física del HTML en {{ ocp_remote_report_host }}
+  ansible.builtin.stat:
+    path: "/tmp/{{ ocp_report_html_path | basename }}"
+  delegate_to: "{{ ocp_remote_report_host }}"
+  register: remote_stat_html
+  when: remote_host_exists
+
+- name: Fallar si el archivo no se encuentra en el destino real
+  ansible.builtin.fail:
+    msg: "ERROR CRÍTICO: El archivo fue reportado como copiado, pero NO existe en {{ ocp_remote_report_host }}. Revisar configuración de conexión SSH."
+  when: 
+    - remote_host_exists
+    - not remote_stat_html.stat.exists
 
 - name: Copiar reporte CSV al host remoto {{ ocp_remote_report_host }}
   ansible.builtin.copy:
@@ -46,7 +60,6 @@
     mode: '0644'
   delegate_to: "{{ ocp_remote_report_host }}"
   when: remote_host_exists
-  ignore_unreachable: true
 
 - name: Aviso si no se pudo exportar al host remoto
   ansible.builtin.debug:
