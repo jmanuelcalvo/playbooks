@@ -9,22 +9,22 @@
         | list
       }}
 
-- name: Generar reporte HTML
-  ansible.builtin.template:
-    src: report.html.j2
+- name: Generar contenidos de reportes en memoria
+  ansible.builtin.set_fact:
+    html_global: "{{ lookup('template', 'report.html.j2') }}"
+    csv_global: "{{ lookup('template', 'report.csv.j2') }}"
+
+- name: Guardar reporte HTML localmente
+  ansible.builtin.copy:
+    content: "{{ html_global }}"
     dest: "{{ ocp_report_html_path }}"
     mode: '0644'
 
-- name: Generar reporte CSV
-  ansible.builtin.template:
-    src: report.csv.j2
+- name: Guardar reporte CSV localmente
+  ansible.builtin.copy:
+    content: "{{ csv_global }}"
     dest: "{{ ocp_report_csv_path }}"
     mode: '0644'
-
-- name: Leer contenido del HTML para exportar a AAP
-  ansible.builtin.slurp:
-    src: "{{ ocp_report_html_path }}"
-  register: html_content_encoded
 
 - name: Verificar si el host remoto está en el inventario
   ansible.builtin.set_fact:
@@ -38,10 +38,6 @@
   delegate_to: "{{ ocp_remote_report_host }}"
   when: remote_host_exists
   ignore_unreachable: true
-
-- name: Generar contenido CSV para exportación
-  ansible.builtin.set_fact:
-    csv_global: "{{ lookup('template', 'report.csv.j2') }}"
 
 - name: Copiar reporte CSV al host remoto {{ ocp_remote_report_host }}
   ansible.builtin.copy:
@@ -60,7 +56,7 @@
 - name: Publicar resultados en AAP (Artifacts)
   ansible.builtin.set_stats:
     data:
-      reporte_html_raw: "{{ html_content_encoded.content | b64decode }}"
+      reporte_html_raw: "{{ html_global }}"
       archivo_html_generado: "{{ ocp_report_html_path | basename }}"
       archivo_csv_generado: "{{ ocp_report_csv_path | basename }}"
       timestamp: "{{ ocp_timestamp }}"
