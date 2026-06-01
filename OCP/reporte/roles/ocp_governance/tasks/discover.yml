@@ -1,5 +1,5 @@
 ---
-- name: Listar namespaces del cluster
+- name: Listar namespaces del cluster (Descubrimiento automático)
   kubernetes.core.k8s_info:
     api_version: v1
     kind: Namespace
@@ -9,6 +9,18 @@
     validate_certs: "{{ k8s_auth.validate_certs }}"
     kubeconfig: "{{ k8s_auth.kubeconfig | default(omit) }}"
   register: ns_all
+  when: namespaces_targets is not defined or namespaces_targets | length == 0
+  ignore_errors: true
+
+- name: Validar éxito del descubrimiento
+  ansible.builtin.fail:
+    msg: >-
+      ERROR 403: No tienes permisos para listar namespaces a nivel de cluster.
+      Por favor, proporciona la lista manualmente en la variable 'namespaces_targets'
+      o solicita el rol 'cluster-reader'.
+  when: 
+    - namespaces_targets is not defined or namespaces_targets | length == 0
+    - ns_all.failed is defined and ns_all.failed
 
 - name: Filtrar namespaces objetivo
   ansible.builtin.set_fact:
@@ -19,11 +31,12 @@
         | reject('match', ocp_exclude_regex)
         | list
       }}
+  when: ns_all.resources is defined
 
 - name: Aplicar filtro de inclusión si está definido
   ansible.builtin.set_fact:
     namespaces_targets: "{{ namespaces_targets | select('match', ocp_include_regex) | list }}"
-  when: ocp_include_regex | length > 0
+  when: ocp_include_regex | length > 0 and namespaces_targets | length > 0
 
 - name: Crear inventario dinámico para procesamiento paralelo
   ansible.builtin.add_host:
