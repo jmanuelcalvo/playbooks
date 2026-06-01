@@ -32,34 +32,7 @@
   register: resources_info
   when: ns_meta.resources | length > 0
 
-- name: Estructurar datos para el reporte
-  ansible.builtin.set_fact:
-    ns_data:
-      namespace: "{{ inventory_hostname }}"
-      gov:
-        criticidad: "{{ ns_metadata.labels.criticidad | default('') }}"
-        dt_owner: "{{ ns_metadata.labels['dt.owner'] | default('') }}"
-        node_selector: "{{ ns_metadata.annotations['openshift.io/node-selector'] | default('') }}"
-      missing:
-        criticidad: "{{ ns_metadata.labels.criticidad is not defined or ns_metadata.labels.criticidad | length == 0 }}"
-        dt_owner: "{{ ns_metadata.labels['dt.owner'] is not defined or ns_metadata.labels['dt.owner'] | length == 0 }}"
-        node_selector: "{{ ns_metadata.annotations['openshift.io/node-selector'] is not defined or ns_metadata.annotations['openshift.io/node-selector'] | length == 0 }}"
-      resumen: >-
-        {{
-          resources_info.results | default([])
-          | map(attribute='item.label', start_tag='recurso')
-          | zip(resources_info.results | default([]) | map(attribute='resources', default=[]) | map('length'))
-          | map('zip', ['recurso', 'cantidad'])
-          | map('map', 'reverse')
-          | map('dict')
-          | list
-        }}
-  # La expresión de resumen arriba es un poco compleja para legibilidad, 
-  # pero más eficiente que un loop de set_fact. 
-  # Vamos a simplificarla para que sea mantenible.
-  when: ns_meta.resources | length > 0
-
-- name: Simplificar resumen de recursos (alternativa legible)
+- name: Inicializar resumen de recursos
   ansible.builtin.set_fact:
     ns_summary: []
 
