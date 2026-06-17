@@ -1,0 +1,63 @@
+---
+- name: Crear politica de Internet para VLAN
+  hosts: localhost
+  gather_facts: false
+
+  collections:
+    - fortinet.fortios
+
+  vars:
+
+    vdom: root
+
+    fortios_access_token: "{{ fortigate_token }}"
+
+    vlan_name: VLAN_Usuarios
+    vlan_subnet: 10.10.20.0/24
+
+    src_interface: vlan20
+    dst_interface: wan1
+
+    policy_name: Internet_VLAN_Usuarios
+
+  tasks:
+
+    - name: Crear objeto de direccion para la VLAN
+      fortios_firewall_address:
+        vdom: "{{ vdom }}"
+        access_token: "{{ fortios_access_token }}"
+        state: present
+        firewall_address:
+          name: "{{ vlan_name }}"
+          subnet: "{{ vlan_subnet }}"
+
+    - name: Crear politica de acceso a Internet
+      fortios_firewall_policy:
+        vdom: "{{ vdom }}"
+        access_token: "{{ fortios_access_token }}"
+        state: present
+        firewall_policy:
+          name: "{{ policy_name }}"
+          action: accept
+          schedule: always
+          nat: enable
+          status: enable
+
+          srcintf:
+            - name: "{{ src_interface }}"
+
+          dstintf:
+            - name: "{{ dst_interface }}"
+
+          srcaddr:
+            - name: "{{ vlan_name }}"
+
+          dstaddr:
+            - name: all
+
+          service:
+            - name: HTTP
+            - name: HTTPS
+            - name: DNS
+
+          logtraffic: all
