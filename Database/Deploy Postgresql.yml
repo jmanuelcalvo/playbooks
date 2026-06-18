@@ -1,0 +1,36 @@
+---
+- name: Instalar la base de datos postgresql en un RHEL 10
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Instalar el repositorio de PostgreSQL
+      ansible.builtin.yum:
+        name: https://download.postgresql.org/pub/repos/yum/reporpms/EL-10-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+        state: present
+
+    - name: Instalar PostgreSQL
+      ansible.builtin.yum:
+        name: postgresql15-server
+        state: present
+
+    - name: Inicializar la base de datos de PostgreSQL
+      ansible.builtin.command:
+        cmd: /usr/pgsql-15/bin/postgresql-15-setup initdb
+      args:
+        creates: /var/lib/pgsql/15/data/PG_VERSION
+
+    - name: Habilitar y iniciar el servicio de PostgreSQL
+      ansible.builtin.service:
+        name: postgresql-15
+        state: started
+        enabled: yes
+
+    - name: Configurar PostgreSQL para aceptar conexiones remotas
+      ansible.builtin.lineinfile: 
+
+    - name: Crear una bases de datos llamada testdb
+      ansible.builtin.postgresql_db:
+        name: testdb
+        state: present
+        
