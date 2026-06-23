@@ -1,0 +1,26 @@
+---
+- name: Administrar servicios en RHEL
+  hosts: all
+  become: true
+
+  vars:
+    service_name: chronyd
+    service_state: started
+
+  tasks:
+
+    - name: Validar estado solicitado
+      ansible.builtin.assert:
+        that:
+          - service_state in ['started', 'stopped', 'restarted']
+        fail_msg: "El estado debe ser started, stopped o restarted"
+
+    - name: Gestionar servicio
+      ansible.builtin.systemd:
+        name: "{{ service_name }}"
+        state: "{{ service_state }}"
+      register: service_result
+
+    - name: Mostrar resultado
+      ansible.builtin.debug:
+        msg: "Servicio {{ service_name }} cambiado a estado {{ service_state }}"
