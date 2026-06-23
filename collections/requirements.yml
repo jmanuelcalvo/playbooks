@@ -1,4 +1,5 @@
-collections: 
+---
+collections:
   - name: community.vmware
   - name: amazon.aws
   - name: community.general

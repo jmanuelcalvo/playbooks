@@ -1,7 +1,7 @@
 ---
 - name: Revisión general de salud en sistemas Linux
   hosts: all
-  gather_facts: yes
+  gather_facts: true
   become: true
 
   vars:
@@ -9,15 +9,14 @@
       - sshd
       - chronyd
     puertos_a_validar:
-      - { nombre: "SSH", puerto: 22 }
-      - { nombre: "HTTPS", puerto: 443 }
+      - { nombre: SSH, puerto: 22 }
+      - { nombre: HTTPS, puerto: 443 }
     procesos_interes:
       - sshd
       - tuned
     sitio_http_prueba: http://www.redhat.com
 
   tasks:
-
     - name: Uso de CPU
       shell: top -bn1 | grep 'Cpu(s)' | awk '{print $2}'
       register: uso_cpu
@@ -107,7 +106,7 @@
       uri:
         url: "{{ sitio_http_prueba }}"
         method: GET
-        return_content: no
+        return_content: false
       register: respuesta_http
       ignore_errors: true
 
@@ -133,4 +132,4 @@
           - "Cantidad de actualizaciones generales: {{ actualizaciones_generales.stdout | default('0') }}"
           - "Respuesta a ping (8.8.8.8): {{ respuesta_ping.stdout_lines | default([]) | join('\n') }}"
           - "Respuesta HTTP externa: Código {{ respuesta_http.status | default('Error') }}"
-          - "¿Requiere atención? {{ 'Sí' if needs_attention else 'No' }}"
+          - ¿Requiere atención? {{ 'Sí' if needs_attention else 'No' }}
