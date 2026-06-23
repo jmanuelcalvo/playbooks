@@ -1,3 +1,4 @@
+---
 - hosts: localhost
   connection: local
   gather_facts: false
@@ -7,34 +8,33 @@
     - vcenter_hostname: portal.vc.opentlc.com
   tasks:
     - vmware_guest:
-        validate_certs: False
-        name: "{{ vm_hostname }}"                                  # Nombre de VM y de como se visualizará en el vCenter
-        template: '{{ SO }}'                                       # Nombre de la Plantilla en el vCenter
-        datacenter: SDDC-Datacenter                                # Nombre del Datacenter donde se va a desplegar
-        cluster: Cluster-1                                         # Nombre del Cluster donde se va a desplegar
-        folder: Workloads/sandbox-9l52q                            # Nombre del folder donde se va a desplegar
-        annotation: 'Servidor desplegado desde Ansible'            # Nota que se quiera colocar en el Servidor desplegado
+        validate_certs: false
+        name: "{{ vm_hostname }}" # Nombre de VM y de como se visualizará en el vCenter
+        template: "{{ SO }}" # Nombre de la Plantilla en el vCenter
+        datacenter: SDDC-Datacenter # Nombre del Datacenter donde se va a desplegar
+        cluster: Cluster-1 # Nombre del Cluster donde se va a desplegar
+        folder: Workloads/sandbox-9l52q # Nombre del folder donde se va a desplegar
+        annotation: Servidor desplegado desde Ansible # Nota que se quiera colocar en el Servidor desplegado
         disk:
-        - size_gb: '{{ vm_so_disk }}'                              # Tamaño a asignar al disco del Sistema Operativo
-          type: thin                                               # Formato del disco thin, thick o eagerzeroedthick 
-          datastore: 'WorkloadDatastore'                           # Nombre del Datastore donde se va a desplegar
+          - size_gb: "{{ vm_so_disk }}" # Tamaño a asignar al disco del Sistema Operativo
+            type: thin # Formato del disco thin, thick o eagerzeroedthick 
+            datastore: WorkloadDatastore # Nombre del Datastore donde se va a desplegar
         hardware:
-          memory_mb: '{{ vm_ram | int * 1024 }}'                   # Cantidad de Memoria RAM a asignar
-          num_cpus: '{{ vm_cpu }}'                                 # Cantidad de CPUs a asignar
-          scsi: paravirtual                                        # Formato de conector de disco atavez de VMware  
-        networks:                                                  # Configuracion de RED   
-        - name: segment-sandbox-9l52q                              # Nombre de la Red a asignar
+          memory_mb: "{{ vm_ram | int * 1024 }}" # Cantidad de Memoria RAM a asignar
+          num_cpus: "{{ vm_cpu }}" # Cantidad de CPUs a asignar
+          scsi: paravirtual # Formato de conector de disco atavez de VMware  
+        networks: # Configuracion de RED   
+          - name: segment-sandbox-9l52q # Nombre de la Red a asignar
         wait_for_ip_address: true
-#          ip: '{{ IP }}'                                           # Dirección IP a asignar    
-#          netmask: '{{ MASK }}'                                    # Mascara de Red a asignar
-#          gateway: '{{ GW }}'                                      # Gateway a asignar
-#          dns_servers: '{{ DNS }}'                                 # Dirección (es) IP de los DNS a asignar
-#          device_type: vmxnet3                                     #Tipo de Interfaz de Red a asignar
-#          start_connected: True
-        state: poweredon                                           # Estado del Servidor luego del despliegue
+        #          ip: '{{ IP }}'                                           # Dirección IP a asignar    
+        #          netmask: '{{ MASK }}'                                    # Mascara de Red a asignar
+        #          gateway: '{{ GW }}'                                      # Gateway a asignar
+        #          dns_servers: '{{ DNS }}'                                 # Dirección (es) IP de los DNS a asignar
+        #          device_type: vmxnet3                                     #Tipo de Interfaz de Red a asignar
+        #          start_connected: True
+        state: poweredon # Estado del Servidor luego del despliegue
       register: createvm
-      
-      
+
     - name: Salida de la creacion de maquina virtual
       debug:
-        msg: "Salida de la creacion de maquina virtual {{ createvm }}"
+        msg: Salida de la creacion de maquina virtual {{ createvm }}

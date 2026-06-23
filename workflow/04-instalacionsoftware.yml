@@ -1,12 +1,11 @@
 ---
 - name: Creacion de recursos de maquina virtual en la nube ABC
   hosts: all
-  gather_facts: no
+  gather_facts: false
   tasks:
-  
-  - name: Creacion de maquinas virtuales
-    ansible.builtin.debug:
-      msg: 
-      - Se creo la VM servidorweb-jmanuel
-      - Con direcion IP X.X.X.X
-      - El password fue enviado al correo
+    - name: Creacion de maquinas virtuales
+      ansible.builtin.debug:
+        msg:
+          - Se creo la VM servidorweb-jmanuel
+          - Con direcion IP X.X.X.X
+          - El password fue enviado al correo

@@ -1,6 +1,6 @@
 ---
 - name: playbook for simple 1 GB partition
-  hosts:  localhost
+  hosts: localhost
   become: true
   vars:
     - disk: /dev/vda
@@ -10,23 +10,21 @@
     - lvsize: 200M
     - directorio: /data1
   tasks:
-
     - name: Leyendo informacion del disco {{ disk }}
-      parted: 
+      parted:
         device: "{{ disk }}"
         unit: MiB
       register: device_info
 
-
     - name: Adicionar particion 2 con el espacio restante del disco
-      parted: 
+      parted:
         device: "{{ disk }}"
         number: "{{ disk_number }}"
         part_type: primary
-        flags: [ lvm ]
+        flags: [lvm]
         state: present
-        part_end: "100%"
-        part_start: "{{ device_info.partitions[0].end + 1}}MiB" 
+        part_end: 100%
+        part_start: "{{ device_info.partitions[0].end + 1}}MiB"
       register: device_created
 
     - name: Crear un volume group llamado {{ vgname }}
@@ -39,22 +37,22 @@
         vg: "{{ vgname }}"
         lv: "{{ lvname }}"
         size: "{{ lvsize }}"
-        force: yes
+        force: true
 
     - name: Crear directorio de montaje
       file:
         path: "{{ directorio }}"
         state: directory
-        mode: '0755'
+        mode: "0755"
 
     - name: formatear el disco
       filesystem:
         fstype: xfs
-        dev: "/dev/{{ vgname }}/{{ lvname }}"
+        dev: /dev/{{ vgname }}/{{ lvname }}
 
-    - name: mountar el "{{ lvname }}" 
+    - name: mountar el "{{ lvname }}"
       mount:
         path: "{{ directorio }}"
-        src: "/dev/{{ vgname }}/{{ lvname }}"
+        src: /dev/{{ vgname }}/{{ lvname }}
         fstype: xfs
         state: mounted
