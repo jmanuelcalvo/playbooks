@@ -1,0 +1,24 @@
+---
+- name: Validar servicio Windows
+  hosts: os_windows
+  gather_facts: false
+
+  tasks:
+
+    - name: Obtener información del servicio
+      ansible.windows.win_service_info:
+        name: "{{ service_name }}"
+      register: service_info
+
+    - name: Validar que el servicio existe
+      ansible.builtin.assert:
+        that:
+          - service_info.exists
+        fail_msg: "El servicio {{ service_name }} no existe"
+
+    - name: Mostrar estado del servicio
+      ansible.builtin.debug:
+        msg: |
+          Servicio: {{ service_name }}
+          Estado: {{ service_info.services[0].state }}
+          Inicio: {{ service_info.services[0].start_mode }}
