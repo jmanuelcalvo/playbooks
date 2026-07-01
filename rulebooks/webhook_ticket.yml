@@ -1,6 +1,5 @@
 ---
-- name: Webhook Demo
-
+- name: Escuchar webhooks
   hosts: localhost
 
   sources:
@@ -8,11 +7,10 @@
         host: 0.0.0.0
         port: 5001
 
-rules:
-  - name: Ver evento
+  rules:
+    - name: Ver evento
 
-    condition: event.meta is defined
-
-    action:
-      print_event:
-        pretty: true
+      condition: event.meta.headers is defined
+      action:
+        print_event:
+          pretty: true
