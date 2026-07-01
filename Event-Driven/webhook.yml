@@ -1,0 +1,18 @@
+---
+- name: Escuchar webhooks
+  hosts: localhost
+
+  sources:
+    - ansible.eda.webhook:
+        host: 0.0.0.0
+        port: 5000
+
+  rules:
+    - name: Lanzar Job Template
+
+      condition: event.meta.headers is defined
+
+      action:
+        run_job_template:
+          name: Demo Job Template
+          organization: Default
