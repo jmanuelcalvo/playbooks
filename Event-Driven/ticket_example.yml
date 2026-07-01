@@ -1,0 +1,18 @@
+---
+- name: Demo variables desde EDA
+  hosts: all
+  gather_facts: false
+
+  tasks:
+
+    - name: Mostrar variables recibidas
+      debug:
+        msg:
+          - "Ticket.............: {{ ticket }}"
+          - "Hostname...........: {{ hostname }}"
+          - "Action.............: {{ action }}"
+          - "Requested by.......: {{ requested_by }}"
+
+    - name: Mostrar todas las variables
+      debug:
+        var: vars
