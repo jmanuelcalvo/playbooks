@@ -8,9 +8,11 @@
         port: 5001
 
   rules:
-    - name: Ver evento
+    - name: Lanzar Job Template
 
       condition: event.meta.headers is defined
+
       action:
-        print_event:
-          pretty: true
+        run_job_template:
+          name: Demo Job Template
+          organization: Default
