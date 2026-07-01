@@ -8,12 +8,11 @@
         host: 0.0.0.0
         port: 5001
 
-  rules:
+rules:
+  - name: Ver evento
 
-    - name: Ver evento
+    condition: event.meta is defined
 
-      condition: event is defined
-
-      action:
-        print_event:
-          pretty: true
+    action:
+      print_event:
+        pretty: true
