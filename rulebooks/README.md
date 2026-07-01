@@ -1,9 +1,9 @@
 Para la prueba mas basica, con el rulebook webhook.yml se puede validar asi:
 
 
-[ansible@aap27 ~]$ curl -X POST -H "Content-Type: application/json" -d '{
+`[ansible@aap27 ~]$ curl -X POST -H "Content-Type: application/json" -d '{
       "host":"server01",
-      "action":"deploy"
+      "action":"deploy"`
 
 Para una prueba mas avazanda como por ejemplo un ticket ticket_example.yml podria se asi:
 
