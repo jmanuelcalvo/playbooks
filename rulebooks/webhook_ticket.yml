@@ -10,18 +10,10 @@
 
   rules:
 
-    - name: Ejecutar Job
+    - name: Ver evento
 
       condition: event is defined
 
       action:
-        run_job_template:
-          name: "EDA Demo"
-          organization: "Default"
-
-          job_args:
-            extra_vars:
-              ticket: "{{ event.ticket }}"
-              hostname: "{{ event.hostname }}"
-              action: "{{ event.action }}"
-              requested_by: "{{ event.requested_by }}"
+        print_event:
+          pretty: true
