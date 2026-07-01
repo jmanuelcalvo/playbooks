@@ -1,5 +1,6 @@
 ---
-- name: Escuchar webhooks
+- name: Webhook Demo
+
   hosts: localhost
 
   sources:
@@ -8,11 +9,19 @@
         port: 5001
 
   rules:
-    - name: Lanzar Job Template
 
-      condition: event.meta.headers is defined
+    - name: Ejecutar Job
+
+      condition: event is defined
 
       action:
         run_job_template:
-          name: Demo Job Template
-          organization: Default
+          name: "EDA Demo"
+          organization: "Default"
+
+          job_args:
+            extra_vars:
+              ticket: "{{ event.ticket }}"
+              hostname: "{{ event.hostname }}"
+              action: "{{ event.action }}"
+              requested_by: "{{ event.requested_by }}"
