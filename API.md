@@ -10,3 +10,15 @@ $ curl -k -u admin:xxx -H "Content-Type: application/json" -X POST https://aap27
 }'
 
 ```
+
+# Consultar los parametros de un survey
+
+```
+$ curl -k -u admin:xxx https://aap27/api/controller/v2/job_templates/6/survey_spec/ | jq
+```
+
+# Consultar la salida del job
+```
+$ curl -k -u admin:xxx https://aap27/api/controller/v2/jobs/32/stdout/?format=txt
+```
+
