@@ -7,5 +7,6 @@ $ curl -k -u admin:xxx -H "Content-Type: application/json" -X POST https://aap27
     "drive_letter": "E",
     "new_disk_size_gb": "500"
   }
-}
-'```
+}'
+
+```
