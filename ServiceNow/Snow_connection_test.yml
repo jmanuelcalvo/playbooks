@@ -1,0 +1,39 @@
+---
+- name: Test ServiceNow
+  hosts: localhost
+  gather_facts: false
+
+  tasks:
+
+    - name: Get OAuth Token
+      uri:
+        url: "{{ snow_token_url }}"
+        method: POST
+        body_format: form-urlencoded
+
+        body:
+          grant_type: password
+          client_id: "{{ snow_client_id }}"
+          client_secret: "{{ snow_client_secret }}"
+          username: "{{ snow_user }}"
+          password: "{{ snow_password }}"
+
+        headers:
+          Accept: application/json
+
+      register: token
+      no_log: true
+
+    - name: Test endpoint
+      uri:
+        url: "{{ snow_base_url }}/api/pase/ansible_md_pacifico/get/md"
+        method: GET
+
+        headers:
+          Authorization: "Bearer {{ token.json.access_token }}"
+          Accept: application/json
+
+      register: result
+
+    - debug:
+        var: result.json
