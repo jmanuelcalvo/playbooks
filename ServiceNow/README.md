@@ -34,4 +34,41 @@ env:
 
 
 
+-----
 
+```
+fields:
+  - id: snow_base_url
+    type: string
+    label: ServiceNow URL
+
+  - id: snow_token_url
+    type: string
+    label: OAuth Token URL
+
+  - id: snow_client_id
+    type: string
+    label: Client ID
+
+  - id: snow_client_secret
+    type: string
+    label: Client Secret
+    secret: true
+
+  - id: snow_user
+    type: string
+    label: Username
+
+  - id: snow_password
+    type: string
+    label: Password
+    secret: true
+
+required:
+  - snow_base_url
+  - snow_token_url
+  - snow_client_id
+  - snow_client_secret
+  - snow_user
+  - snow_password
+```
