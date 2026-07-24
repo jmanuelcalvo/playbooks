@@ -31,9 +31,6 @@
         ritm_sysid: "{{ ritm.record[0].sys_id }}"
 
     - debug:
-        var: ritm_sysid
-
-    - debug:
         msg:
           - "RITM={{ ritm.record[0].number }}"
           - "SYS_ID={{ ritm_sysid }}"
