@@ -1,0 +1,21 @@
+---
+- name: Validate ServiceNow connectivity
+  hosts: localhost
+  gather_facts: false
+
+  collections:
+    - servicenow.itsm
+
+  vars:
+    snow_username: "{{ lookup('env','SN_USER') }}"
+
+  tasks:
+    - name: Query one incident
+      servicenow.itsm.api_info:
+        resource: incident
+        sysparm_limit: 1
+      register: result
+
+    - name: Show result
+      ansible.builtin.debug:
+        var: result.record
