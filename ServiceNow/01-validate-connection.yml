@@ -1,6 +1,6 @@
 ---
 - name: Validate ServiceNow connectivity
-  hosts: localhost
+  hosts: localhosthttps://github.com/jmanuelcalvo/playbooks/blob/main/ServiceNow/01-validate-connection.yml
   gather_facts: false
 
   collections:
@@ -10,11 +10,23 @@
     snow_username: "{{ lookup('env','SN_USER') }}"
 
   tasks:
-    - name: Query one incident
+
+    - name: Get RITMs
       servicenow.itsm.api_info:
-        resource: incident
-      register: result
+        resource: sc_req_item
+        columns:
+          - number
+          - short_description
+          - state
+          - sys_id
+          - opened_at
+      register: ritms
+  
+#    - name: Query one incident
+#      servicenow.itsm.api_info:
+#        resource: incident
+#      register: result
 
     - name: Show result
       ansible.builtin.debug:
-        var: result.record
+        var: ritms.record
