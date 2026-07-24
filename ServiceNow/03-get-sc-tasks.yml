@@ -1,0 +1,28 @@
+---
+- name: Get Catalog Tasks
+  hosts: localhost
+  gather_facts: false
+
+  collections:
+    - servicenow.itsm
+
+  vars:
+
+    ritm_sysid: ""
+
+  tasks:
+
+    - name: Query tasks
+      servicenow.itsm.api_info:
+        resource: sc_task
+        query:
+          request_item: "{{ ritm_sysid }}"
+        columns:
+          - number
+          - short_description
+          - state
+          - sys_id
+      register: tasks
+
+    - debug:
+        var: tasks.record
