@@ -3,12 +3,37 @@
   hosts: localhost
   gather_facts: false
 
+  vars:
+    ritm_number: "RITM0012345"
+
   tasks:
 
-    - name: Get OAuth Token
-      uri:
+    ####################################################################
+    # Show configuration (without secrets)
+    ####################################################################
+
+    - name: Show ServiceNow configuration
+      ansible.builtin.debug:
+        msg:
+          - "Base URL      : {{ snow_base_url }}"
+          - "Token URL     : {{ snow_token_url }}"
+          - "Client ID     : {{ snow_client_id }}"
+          - "Username      : {{ snow_user }}"
+          - "RITM          : {{ ritm_number }}"
+
+    ####################################################################
+    # Request OAuth Token
+    ####################################################################
+
+    - name: Request OAuth Token
+      ansible.builtin.uri:
         url: "{{ snow_token_url }}"
         method: POST
+
+        headers:
+          Accept: application/json
+          Content-Type: application/x-www-form-urlencoded
+
         body_format: form-urlencoded
 
         body:
@@ -18,22 +43,104 @@
           username: "{{ snow_user }}"
           password: "{{ snow_password }}"
 
-        headers:
-          Accept: application/json
+        return_content: true
 
-      register: token
-      no_log: true
+        validate_certs: false
 
-    - name: Test endpoint
-      uri:
+        status_code:
+          - 200
+
+      register: oauth
+
+      ignore_errors: true
+
+    ####################################################################
+    # Display OAuth response
+    ####################################################################
+
+    - name: Show OAuth Result
+      ansible.builtin.debug:
+        var: oauth
+
+    ####################################################################
+    # Stop if token could not be obtained
+    ####################################################################
+
+    - name: Validate OAuth Token
+      ansible.builtin.fail:
+        msg: |
+          Unable to obtain OAuth Token.
+
+          HTTP Status:
+          {{ oauth.status | default('Unknown') }}
+
+          Response:
+
+          {{ oauth.content | default(oauth.msg) }}
+
+      when: oauth.failed or oauth.json.access_token is not defined
+
+    ####################################################################
+    # Save Token
+    ####################################################################
+
+    - name: Save Token
+      ansible.builtin.set_fact:
+        snow_token: "{{ oauth.json.access_token }}"
+
+    ####################################################################
+    # Test endpoint
+    ####################################################################
+
+    - name: Query ServiceNow endpoint
+      ansible.builtin.uri:
+
         url: "{{ snow_base_url }}/api/pase/ansible_md_pacifico/get/md"
+
         method: GET
 
         headers:
-          Authorization: "Bearer {{ token.json.access_token }}"
+          Authorization: "Bearer {{ snow_token }}"
           Accept: application/json
 
-      register: result
+        return_content: true
 
-    - debug:
-        var: result.json
+        validate_certs: false
+
+        status_code:
+          - 200
+          - 400
+          - 401
+          - 403
+          - 404
+          - 500
+
+      register: md
+
+      ignore_errors: true
+
+    ####################################################################
+    # Show HTTP Result
+    ####################################################################
+
+    - name: Show Endpoint Status
+      ansible.builtin.debug:
+        msg:
+          - "HTTP Status : {{ md.status }}"
+          - "Success     : {{ md.status == 200 }}"
+
+    ####################################################################
+    # Show JSON
+    ####################################################################
+
+    - name: Display JSON
+      ansible.builtin.debug:
+        var: md.json
+
+    ####################################################################
+    # Show Raw Response
+    ####################################################################
+
+    - name: Display Raw Response
+      ansible.builtin.debug:
+        var: md.content
