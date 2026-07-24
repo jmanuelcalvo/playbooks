@@ -1,0 +1,35 @@
+---
+- name: Find task attachments
+  hosts: localhost
+  gather_facts: false
+
+  collections:
+    - servicenow.itsm
+
+  vars:
+    task_sysid: "xxxxxxxxxxxxxxxx"
+    download_path: "/tmp"    
+
+  tasks:
+
+    - name: Search attachments
+      servicenow.itsm.api_info:
+        resource: sys_attachment
+        sysparm_query: "table_name=sc_task^table_sys_id={{ task_sysid }}"
+        columns:
+          - sys_id
+          - file_name
+          - content_type
+          - size_bytes
+      register: attachments
+
+    - debug:
+        var: attachments.record
+
+
+
+      - name: Download attachments
+      servicenow.itsm.attachment_info:
+        sys_id: "{{ item.sys_id }}"
+        dest: "{{ download_path }}/{{ item.file_name }}"
+      loop: "{{ attachments.record }}"
