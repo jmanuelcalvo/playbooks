@@ -1,0 +1,26 @@
+---
+- name: Start Catalog Task
+  hosts: localhost
+  gather_facts: false
+
+  collections:
+    - servicenow.itsm
+
+  vars:
+
+    task_sysid: ""
+
+  tasks:
+
+    - name: Set task In Progress
+      servicenow.itsm.api:
+        resource: sc_task
+        action: patch
+        sys_id: "{{ task_sysid }}"
+        data:
+
+          state: "2"
+
+          work_notes: |
+
+            Automation started by Ansible Automation Platform.
