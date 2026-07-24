@@ -1,0 +1,28 @@
+---
+- name: Update Work Notes
+  hosts: localhost
+  gather_facts: false
+
+  collections:
+    - servicenow.itsm
+
+  vars:
+
+    task_sysid: ""
+
+  tasks:
+
+    - name: Update notes
+      servicenow.itsm.api:
+        resource: sc_task
+        action: patch
+        sys_id: "{{ task_sysid }}"
+        data:
+
+          work_notes: |
+
+            Automation executed successfully.
+
+            Execution Environment: Default EE
+
+            Result: SUCCESS
