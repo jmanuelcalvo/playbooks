@@ -25,10 +25,7 @@
 
     - debug:
         var: attachments.record
-
-
-
-      - name: Download attachments
+    - name: Download attachments
       servicenow.itsm.attachment_info:
         sys_id: "{{ item.sys_id }}"
         dest: "{{ download_path }}/{{ item.file_name }}"
