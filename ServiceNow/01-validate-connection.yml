@@ -13,7 +13,6 @@
     - name: Query one incident
       servicenow.itsm.api_info:
         resource: incident
-        sysparm_limit: 1
       register: result
 
     - name: Show result
