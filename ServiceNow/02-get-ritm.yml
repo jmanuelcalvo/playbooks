@@ -7,25 +7,34 @@
     - servicenow.itsm
 
   vars:
-
-    ritm_number: RITM0000005
+    ritm_number: "RITM0000005"
 
   tasks:
 
     - name: Search RITM
       servicenow.itsm.api_info:
         resource: sc_req_item
-        query:
-          number: "{{ ritm_number }}"
+        sysparm_query: "number={{ ritm_number }}"
+        columns:
+          - number
+          - sys_id
+          - short_description
+          - state
       register: ritm
 
+    - name: Show RITM
+      debug:
+        var: ritm.record
+
     - name: Save sys_id
-      ansible.builtin.set_fact:
+      set_fact:
         ritm_sysid: "{{ ritm.record[0].sys_id }}"
 
     - debug:
-        msg:
+        var: ritm_sysid
 
+    - debug:
+        msg:
           - "RITM={{ ritm.record[0].number }}"
           - "SYS_ID={{ ritm_sysid }}"
           - "STATE={{ ritm.record[0].state }}"
