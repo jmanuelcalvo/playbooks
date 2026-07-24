@@ -1,6 +1,6 @@
 ---
 - name: Validate ServiceNow connectivity
-  hosts: localhosthttps://github.com/jmanuelcalvo/playbooks/blob/main/ServiceNow/01-validate-connection.yml
+  hosts: localhost
   gather_facts: false
 
   collections:
