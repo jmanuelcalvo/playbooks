@@ -1,0 +1,28 @@
+---
+- name: Close Catalog Task
+  hosts: localhost
+  gather_facts: false
+
+  collections:
+    - servicenow.itsm
+
+  vars:
+
+    task_sysid: ""
+
+  tasks:
+
+    - name: Close task
+      servicenow.itsm.api:
+        resource: sc_task
+        action: patch
+        sys_id: "{{ task_sysid }}"
+        data:
+
+          state: "3"
+
+          close_notes: Completed by AAP
+
+          work_notes: |
+
+            Automation finished successfully.
