@@ -1,0 +1,31 @@
+---
+- name: Get one RITM
+  hosts: localhost
+  gather_facts: false
+
+  collections:
+    - servicenow.itsm
+
+  vars:
+
+    ritm_number: RITM0000005
+
+  tasks:
+
+    - name: Search RITM
+      servicenow.itsm.api_info:
+        resource: sc_req_item
+        query:
+          number: "{{ ritm_number }}"
+      register: ritm
+
+    - name: Save sys_id
+      ansible.builtin.set_fact:
+        ritm_sysid: "{{ ritm.record[0].sys_id }}"
+
+    - debug:
+        msg:
+
+          - "RITM={{ ritm.record[0].number }}"
+          - "SYS_ID={{ ritm_sysid }}"
+          - "STATE={{ ritm.record[0].state }}"
