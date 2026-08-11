@@ -1,0 +1,50 @@
+---
+# Patch Policy Definition
+# Enforced by pre-patch-check.yml before any patching workflow executes
+policy:
+  name: parasol-finance-patch-policy
+  version: "1.0"
+  description: >
+    Patching prerequisites for Parasol Finance production systems.
+    All conditions must pass before advisory application is permitted.    
+gates:
+  maintenance_window:
+    enabled: true
+    start: "06:00"
+    end: "10:00"
+    timezone: UTC
+    skip_weekends: false
+    description: Patching only permitted during defined maintenance window
+  backup_verification:
+    enabled: true
+    max_age_hours: 24
+    marker_path: /var/log/last-backup-timestamp
+    description: A successful backup must exist within the specified age
+  disk_space:
+    enabled: true
+    minimum_free_gb: 2
+    mount_point: /
+    description: Minimum free disk space required for safe package operations
+  service_health:
+    enabled: true
+    target_service: httpd
+    required_state: active
+    description: Target service must be running before patch is applied
+  change_approval:
+    enabled: true
+    requires_aap_approval_node: true
+    description: AAP workflow approval node required for production changes
+rollback:
+  enabled: true
+  method: dnf_history_undo
+  automatic_on_failure: false
+  description: Manual rollback via dnf history undo if post-patch verification fails
+notifications:
+  on_policy_violation:
+    - type: webhook
+      url: "{{ notification_webhook_url }}"
+    - type: email
+      recipients: platform-team@parasol.example.com
+  on_patch_success:
+    - type: webhook
+      url: "{{ notification_webhook_url }}"
