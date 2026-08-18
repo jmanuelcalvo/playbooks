@@ -1,0 +1,52 @@
+---
+- name: Cisco IOS Upgrade - Precheck
+  hosts: all
+  gather_facts: false
+
+  tasks:
+
+    - name: Show version
+      cisco.ios.ios_command:
+        commands:
+          - show version
+      register: version_output
+
+    - name: Show switch
+      cisco.ios.ios_command:
+        commands:
+          - show switch
+      register: switch_output
+
+    - name: Show boot
+      cisco.ios.ios_command:
+        commands:
+          - show boot
+      register: boot_output
+
+    - name: Show interfaces
+      cisco.ios.ios_command:
+        commands:
+          - show interface status
+      register: interfaces_output
+
+    - name: Show LACP
+      cisco.ios.ios_command:
+        commands:
+          - show lacp internal
+      register: lacp_output
+
+    - name: Show routes
+      cisco.ios.ios_command:
+        commands:
+          - show ip route
+      register: route_output
+
+    - name: Show logging
+      cisco.ios.ios_command:
+        commands:
+          - show logging
+      register: logging_output
+
+    - name: Display current IOS
+      ansible.builtin.debug:
+        var: version_output.stdout_lines
