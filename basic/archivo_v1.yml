@@ -1,0 +1,10 @@
+- name: Mi segundo playbook
+  hosts: all
+  vars:
+    ruta_archivo: /tmp/mi-primer-archivo.txt
+
+  tasks:
+    - name: Crear un archivo
+      ansible.builtin.file:
+        path: "{{ ruta_archivo }}"
+        state: touch
