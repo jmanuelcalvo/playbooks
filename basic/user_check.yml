@@ -1,0 +1,17 @@
+---
+- name: Chequeo de usuarios
+  hosts: node01
+  become: true
+  vars:
+    user_name: 'Roger'
+  tasks:
+    - name: Chequear que el usuario exista
+      ansible.builtin.command:
+        cmd: "id {{ user_name }}"
+      register: user_check
+      changed_when: false
+
+    - name: Reportar el estado del usuario
+      ansible.builtin.debug:
+        msg: "El Useuario {{ user_name }} existe."
+      when: user_check.rc == 0
