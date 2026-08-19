@@ -1,0 +1,19 @@
+---
+- name: Basic System Setup
+  hosts: all
+  become: true
+  vars:
+    user_name: 'Roger'
+  tasks:
+    - name: Instalar los paquetes requeridos
+      ansible.builtin.package:
+        name:
+          - git
+          - vim
+        state: present
+
+    - name: Crear un nuevo usuario
+      ansible.builtin.user:
+        name: "{{ user_name }}"
+        state: present
+        create_home: true
