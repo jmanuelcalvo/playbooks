@@ -1,8 +1,8 @@
 - name: Mi primer playbook
-   hosts: all
+  hosts: all
 
-   tasks:
-     - name: Crear un archivo
-       ansible.builtin.file:
-         path: /tmp/mi-primer-archivo.txt
-         state: touch
+  tasks:
+    - name: Crear un archivo
+      ansible.builtin.file:
+        path: /tmp/mi-primer-archivo.txt
+        state: touch
