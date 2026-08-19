@@ -1,0 +1,40 @@
+---
+- name: Apache server installed
+  hosts: node03
+  vars:
+    mensaje: "Hola mundo"
+
+  tasks:
+    - name: latest Apache version installed
+      ansible.builtin.yum:
+        name: httpd
+        state: latest
+
+    - name: latest firewalld version installed
+      ansible.builtin.yum:
+        name: firewalld
+        state: latest
+
+    - name: firewalld enabled and running
+      ansible.builtin.service:
+        name: firewalld
+        enabled: true
+        state: started
+
+    - name: firewalld permits http service
+      ansible.builtin.firewalld:
+        service: http
+        permanent: true
+        state: enabled
+        immediate: true
+
+    - name: Apache enabled and running
+      ansible.builtin.service:
+        name: httpd
+        enabled: true
+        state: started
+
+    - name: Create text file
+      ansible.builtin.copy:
+        dest: /var/www/html/mensaje.txt
+        content: "{{ mensaje }}"
