@@ -1,0 +1,28 @@
+---
+- name: Registrar RHEL 9 en RHSM e Insights usando RHEL System Roles
+  hosts: all
+  become: true
+  vars:
+    # Variables a inyectar desde AAP
+    rh_user: ""
+    rh_password: ""
+
+    # Configuración del rol rhc (Red Hat Connect / Subscription / Insights)
+    rhc_auth:
+      login:
+        username: "{{ rh_user }}"
+        password: "{{ rh_password }}"
+    rhc_insights:
+      state: present
+
+  tasks:
+    - name: Validar credenciales obligatorias
+      ansible.builtin.assert:
+        that:
+          - rh_user | length > 0
+          - rh_password | length > 0
+        fail_msg: "Las variables 'rh_user' y 'rh_password' son obligatorias."
+
+    - name: Ejecutar el rol oficial de Red Hat para suscripción e Insights
+      ansible.builtin.include_role:
+        name: redhat.rhel_system_roles.rhc
