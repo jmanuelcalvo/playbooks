@@ -1,0 +1,17 @@
+---
+- name: Ejecutar escaneo de Compliance y reportar a Red Hat Insights
+  hosts: all
+  become: true
+  vars:
+    # Definir el perfil SCAP deseado (Ej: CIS Benchmark para RHEL 9)
+    ssg_profile: xccdf_org.ssgproject.content_profile_cis
+  
+  tasks:
+    - name: Configurar y ejecutar el escaneo OpenSCAP (RHEL System Role)
+      ansible.builtin.include_role:
+        name: redhat.rhel_system_roles.ssg
+
+    - name: Forzar la sincronización del reporte con Red Hat Insights
+      ansible.builtin.command:
+        cmd: insights-client --compliance
+      changed_when: false
