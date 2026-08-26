@@ -1,0 +1,40 @@
+---
+- name: Generar CSR
+  hosts: localhost
+  gather_facts: false
+
+  vars:
+    dominio: "www.ejemplo.com"
+    directorio: "/tmp/certificados"
+
+  tasks:
+
+    - name: Crear directorio para certificados
+      ansible.builtin.file:
+        path: "{{ directorio }}"
+        state: directory
+        mode: "0700"
+
+    - name: Generar Private Key
+      community.crypto.openssl_privatekey:
+        path: "{{ directorio }}/{{ dominio }}.key"
+        type: RSA
+        size: 2048
+        mode: "0600"
+
+    - name: Generar CSR
+      community.crypto.openssl_csr:
+        path: "{{ directorio }}/{{ dominio }}.csr"
+        privatekey_path: "{{ directorio }}/{{ dominio }}.key"
+        common_name: "{{ dominio }}"
+        country_name: "CO"
+        organization_name: "Mi Empresa"
+        organizational_unit_name: "IT"
+        state_or_province_name: "Bogota"
+        locality_name: "Bogota"
+
+    - name: Mostrar ubicación de los archivos
+      ansible.builtin.debug:
+        msg:
+          - "Private Key: {{ directorio }}/{{ dominio }}.key"
+          - "CSR: {{ directorio }}/{{ dominio }}.csr"
