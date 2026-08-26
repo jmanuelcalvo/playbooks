@@ -1,0 +1,27 @@
+---
+- name: Consultar certificado SSL/TLS
+  hosts: localhost
+  gather_facts: false
+
+  vars:
+    destino: "www.redhat.com"
+    puerto: 443
+
+  tasks:
+
+    - name: Obtener certificado del servidor
+      community.crypto.get_certificate:
+        host: "{{ destino }}"
+        port: "{{ puerto }}"
+      register: certificado
+
+    - name: Mostrar información del certificado
+      ansible.builtin.debug:
+        msg:
+          - "Servidor: {{ destino }}"
+          - "Puerto: {{ puerto }}"
+          - "Subject: {{ certificado.cert.subject }}"
+          - "Issuer: {{ certificado.cert.issuer }}"
+          - "Serial: {{ certificado.cert.serial_number }}"
+          - "Válido desde: {{ certificado.cert.not_before }}"
+          - "Válido hasta: {{ certificado.cert.not_after }}"
