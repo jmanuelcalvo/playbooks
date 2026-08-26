@@ -1,1 +1,13 @@
-ansible-galaxy collection install community.crypto
+
+
+
+collections: 
+  - name: community.vmware
+  - name: community.crypto
+  - name: amazon.aws
+  - name: community.general
+  - name: community.windows
+  - name: community.mysql
+  - name: https://github.com/shadowman-lab/shadowman.reports.git
+    type: git
+    version: main
