@@ -4,7 +4,7 @@
   gather_facts: false
 
   vars:
-    destino: "www.redhat.com"
+    destino: 
     puerto: 443
 
   tasks:
@@ -13,6 +13,7 @@
       community.crypto.get_certificate:
         host: "{{ destino }}"
         port: "{{ puerto }}"
+        asn1_base64: true
       register: certificado
 
     - name: Mostrar información del certificado
@@ -20,8 +21,9 @@
         msg:
           - "Servidor: {{ destino }}"
           - "Puerto: {{ puerto }}"
-          - "Subject: {{ certificado.cert.subject }}"
-          - "Issuer: {{ certificado.cert.issuer }}"
-          - "Serial: {{ certificado.cert.serial_number }}"
-          - "Válido desde: {{ certificado.cert.not_before }}"
-          - "Válido hasta: {{ certificado.cert.not_after }}"
+          - "Subject: {{ certificado.subject }}"
+          - "Issuer: {{ certificado.issuer }}"
+          - "Serial: {{ certificado.serial_number }}"
+          - "Válido desde: {{ certificado.not_before }}"
+          - "Válido hasta: {{ certificado.not_after }}"
+          - "Expirado: {{ certificado.expired }}"
