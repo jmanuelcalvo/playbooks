@@ -1,0 +1,131 @@
+---
+- name: Demo ITSM - Creacion y actualizacion de incidente
+  hosts: localhost
+  gather_facts: false
+
+  vars:
+    mattermost_webhook: "http://192.168.0.12:8065/hooks/XXXXXXXXXXXX"
+  tasks:
+
+    # ============================================================
+    # 1. GENERAR NUMERO DE TICKET
+    # ============================================================
+
+    - name: Generar numero de ticket
+      ansible.builtin.set_fact:
+        ticket_id: "INC{{ 100000 + (999999 | random) }}"
+
+    # ============================================================
+    # 2. OBTENER INFORMACION DEL USUARIO AAP
+    # ============================================================
+
+    - name: Definir solicitante
+      ansible.builtin.set_fact:
+        solicitante: "{{ awx_user_name | default('Usuario AAP') }}"
+
+    # ============================================================
+    # 3. DEFINIR COLOR E ICONO SEGUN EL ESTADO
+    # ============================================================
+
+    - name: Definir apariencia del ticket
+      ansible.builtin.set_fact:
+
+        ticket_color: >-
+          {{
+            {
+              'OPEN': '#FF0000',
+              'IN_PROGRESS': '#FFA500',
+              'RESOLVED': '#00AA00',
+              'CLOSED': '#808080'
+            }.get(estado, '#808080')
+          }}
+
+        ticket_icon: >-
+          {{
+            {
+              'OPEN': '🔴',
+              'IN_PROGRESS': '🟡',
+              'RESOLVED': '🟢',
+              'CLOSED': '⚪'
+            }.get(estado, '⚪')
+          }}
+
+
+    # ============================================================
+    # 4. MOSTRAR INFORMACION DEL INCIDENTE
+    # ============================================================
+
+    - name: Mostrar informacion del ticket
+      ansible.builtin.debug:
+        msg:
+          - "=========================================="
+          - "       INCIDENTE ITSM - ANSIBLE"
+          - "=========================================="
+          - "Ticket:       {{ ticket_id }}"
+          - "Solicitante:  {{ solicitante }}"
+          - "Servidor:     {{ servidor }}"
+          - "Servicio:     {{ servicio }}"
+          - "Severidad:    {{ severidad }}"
+          - "Estado:       {{ estado }}"
+          - "Descripcion:  {{ descripcion }}"
+          - "=========================================="
+
+
+    # ============================================================
+    # 5. ENVIAR INCIDENTE A MATTERMOST
+    # ============================================================
+
+    - name: Enviar incidente a Mattermost
+      ansible.builtin.uri:
+        url: "{{ mattermost_webhook }}"
+        method: POST
+        body_format: json
+
+        body:
+
+          username: "Ansible Automation"
+
+          icon_emoji: ":robot:"
+
+          text: "🎫 **Actualización automática de incidente**"
+
+          attachments:
+
+            - color: "{{ ticket_color }}"
+
+              title: "{{ ticket_icon }} {{ ticket_id }}"
+
+              fields:
+
+                - title: "Servidor"
+                  value: "{{ servidor }}"
+                  short: true
+
+                - title: "Servicio"
+                  value: "{{ servicio }}"
+                  short: true
+
+                - title: "Severidad"
+                  value: "{{ severidad }}"
+                  short: true
+
+                - title: "Estado"
+                  value: "{{ ticket_icon }} {{ estado }}"
+                  short: true
+
+                - title: "Solicitante"
+                  value: "{{ solicitante }}"
+                  short: true
+
+                - title: "Plataforma"
+                  value: "Red Hat Ansible Automation Platform"
+                  short: true
+
+                - title: "Descripción"
+                  value: "{{ descripcion }}"
+                  short: false
+
+              footer: "Automated ITSM Demo"
+
+        status_code:
+          - 200
