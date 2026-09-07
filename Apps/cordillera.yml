@@ -4,6 +4,13 @@
   hosts: all
   tasks:
 
+    - name: Instalacion de paquetes necesarios
+      ansible.builtin.yum:
+        name:
+          - git
+          - vim-enhanced
+          - httpd
+        state: present
     
     - name: Red Hat selinux disable
       ansible.builtin.command: setenforce 0
