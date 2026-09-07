@@ -22,7 +22,7 @@
 
     - name: Copiar todo el contenido de /app a /html
       ansible.builtin.copy:
-        src: /var/www/html/app/       # La barra "/" al final es clave para copiar el contenido y no la carpeta completa
+        src: /tmp/app/       # La barra "/" al final es clave para copiar el contenido y no la carpeta completa
         dest: /var/www/html/
         remote_src: yes                # Indica que el origen ya está dentro del servidor remoto
 
