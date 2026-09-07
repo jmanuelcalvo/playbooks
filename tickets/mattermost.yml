@@ -1,0 +1,61 @@
+---
+- name: Demo - Creacion automatizada de ticket
+  hosts: localhost
+  gather_facts: false
+
+  vars:
+    servidor: "srv-app-01"
+    servicio: "Aplicacion Web"
+    severidad: "Alta"
+    descripcion: "El servicio de aplicacion no responde correctamente"
+    solicitante: "Demo Ansible"
+
+  tasks:
+
+    - name: Generar numero de ticket
+      ansible.builtin.set_fact:
+        ticket_id: "INC{{ 100000 + (999999 | random) }}"
+
+    - name: Mostrar informacion del ticket
+      ansible.builtin.debug:
+        msg:
+          - "======================================"
+          - "        CREACION DE INCIDENTE"
+          - "======================================"
+          - "Ticket: {{ ticket_id }}"
+          - "Servidor: {{ servidor }}"
+          - "Servicio: {{ servicio }}"
+          - "Severidad: {{ severidad }}"
+          - "Solicitante: {{ solicitante }}"
+          - "Descripcion: {{ descripcion }}"
+          - "Estado: Open"
+          - "======================================"
+
+    - name: Enviar ticket a Mattermost
+      ansible.builtin.uri:
+        url: "{{ mattermost_webhook_url }}"
+        method: POST
+        body_format: json
+        body:
+          username: "Ansible Automation"
+          icon_emoji: ":robot:"
+          text: |
+            ## 🎫 Nuevo incidente creado
+
+            **Ticket:** `{{ ticket_id }}`
+
+            **Servidor:** `{{ servidor }}`
+
+            **Servicio:** {{ servicio }}
+
+            **Severidad:** **{{ severidad }}**
+
+            **Solicitante:** {{ solicitante }}
+
+            **Descripción:** {{ descripcion }}
+
+            **Estado:** 🟢 **OPEN**
+
+            ---
+            🤖 *Ticket generado automáticamente por Ansible Automation Platform*
+        status_code: 200
