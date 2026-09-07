@@ -1,0 +1,33 @@
+---
+- name: Desplegar la aplicacion Cordillera en un servidor Web
+  gather_facts: false
+  hosts: all
+  tasks:
+
+    - name: Verificar si httpd está instalado
+      ansible.builtin.stat:
+        path: /usr/sbin/httpd
+      register: httpd_installed
+
+    - name: Descargar y descomprimir el archivo ZIP
+      ansible.builtin.unarchive:
+        src: "{{ url_zip }}"
+        dest: /var/www/html/pacman
+        remote_src: yes 
+            
+    - name: Iniciar servicio de apache
+      ansible.builtin.service:
+        name: httpd
+        state: started   
+                
+    - name: Verificar el estado del servidor web
+      ansible.builtin.uri:
+        url: "http://{{ ansible_host}}/"
+        method: GET
+      register: result
+      ignore_errors: yes  # Ignora errores de conexión, ya que el servidor podría no estar disponible
+
+    - name: Mostrar mensaje de error si el estado no es 200
+      debug:
+        msg: "Error: El servidor web no está devolviendo un código de estado 200."
+      when: result.status != 200
