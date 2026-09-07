@@ -11,7 +11,7 @@
 
     - name: Descargar y descomprimir el archivo ZIP
       ansible.builtin.unarchive:
-        src: "{{ url_zip }}"
+        src: https://github.com/jmanuelcalvo/playbooks/blob/main/Apps/cordillera_web_apache.zip
         dest: /var/www/html/pacman
         remote_src: yes 
             
