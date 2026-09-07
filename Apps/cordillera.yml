@@ -1,33 +1,31 @@
 ---
-- name: Desplegar la aplicacion Cordillera en un servidor Web
+- name: Desplegar la aplicacion Pacman en un servidor Web
   gather_facts: false
   hosts: all
   tasks:
 
-    - name: Verificar si httpd está instalado
-      ansible.builtin.stat:
-        path: /usr/sbin/httpd
-      register: httpd_installed
+    
+    - name: Red Hat selinux disable
+      ansible.builtin.command: setenforce 0
 
-    - name: Descargar y descomprimir el archivo ZIP
-      ansible.builtin.unarchive:
-        src: https://github.com/jmanuelcalvo/playbooks/blob/main/Apps/cordillera_web_apache.zip
-        dest: /var/www/html/pacman
-        remote_src: yes 
-            
+    - name: Clonar el repo de pacman en la ruta del servidor Web
+      ansible.builtin.git:
+        repo: https://github.com/jmanuelcalvo/cordillera-app.git
+        dest: /tmp/app
+
+    - name: Copiar todo el contenido de /app a /html
+      ansible.builtin.copy:
+        src: /var/www/html/app/       # La barra "/" al final es clave para copiar el contenido y no la carpeta completa
+        dest: /var/www/html/
+        remote_src: yes                # Indica que el origen ya está dentro del servidor remoto
+
+    - name: Eliminar la carpeta /app que ya quedó vacía (Opcional)
+      ansible.builtin.file:
+        path: /tmp/app
+        state: absent
+    
     - name: Iniciar servicio de apache
       ansible.builtin.service:
         name: httpd
         state: started   
                 
-    - name: Verificar el estado del servidor web
-      ansible.builtin.uri:
-        url: "http://{{ ansible_host}}/"
-        method: GET
-      register: result
-      ignore_errors: yes  # Ignora errores de conexión, ya que el servidor podría no estar disponible
-
-    - name: Mostrar mensaje de error si el estado no es 200
-      debug:
-        msg: "Error: El servidor web no está devolviendo un código de estado 200."
-      when: result.status != 200
