@@ -3,18 +3,17 @@ kind: Template
 
 metadata:
   name: dynamic-vm-demo
-  title: Dynamic VM API Demo
-  description: >
-    Demo de un formulario dinámico consultando
-    una API externa.
+  title: Dynamic VM Demo
+  description: Demo de formulario dinámico para Ansible Self-Service Portal
 
 spec:
-  owner: user:guest
-  type: automation
+  owner: group:default/team-platform
+  type: service
 
   parameters:
 
     - title: Selección de VM
+      description: Seleccione la máquina virtual sobre la que desea ejecutar la automatización.
 
       required:
         - vmId
@@ -23,13 +22,31 @@ spec:
 
         vmId:
           title: Virtual Machine
-          description: Seleccione una VM obtenida desde MockAPI
+          description: Seleccione una VM
           type: string
-          ui:field: DynamicVmPicker
+
+          enum:
+            - "1"
+            - "2"
+            - "3"
+            - "4"
+            - "5"
+            - "7"
+
+          enumNames:
+            - "Bobbie Kshlerin"
+            - "Conrad Bogan"
+            - "Ronald Wehner"
+            - "Hector Feest II"
+            - "Cecilia Schuppe-Dicki"
+            - "Stuart Watsica"
+
+          ui:widget: select
 
       dependencies:
 
         vmId:
+
           allOf:
 
             - if:
@@ -42,9 +59,7 @@ spec:
 
                   reboot:
                     title: ¿Reiniciar la VM?
-                    description: >
-                      La VM con ID 7 requiere confirmar
-                      si desea realizar un reinicio.
+                    description: Esta opción solamente aparece para la VM con ID 7.
                     type: boolean
                     default: false
 
@@ -53,27 +68,14 @@ spec:
 
   steps:
 
-    - id: showSelection
+    - id: show-selection
       name: Mostrar selección
       action: debug:log
 
       input:
         message: |
-          VM seleccionada
-          -------------------------
-          VM ID: ${{ parameters.vmId }}
+          VM seleccionada:
+          ID = ${{ parameters.vmId }}
 
-          Reboot:
+          ¿Reiniciar?
           ${{ parameters.reboot }}
-
-  output:
-
-    text:
-
-      - title: Resultado
-        content: |
-          ## VM seleccionada
-
-          **VM ID:** `${{ parameters.vmId }}`
-
-          La selección fue procesada correctamente.
