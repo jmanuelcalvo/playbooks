@@ -2,80 +2,25 @@ apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
 
 metadata:
-  name: dynamic-vm-demo
-  title: Dynamic VM Demo
-  description: Demo de formulario dinámico para Ansible Self-Service Portal
+  name: vm-dropdown-test
+  title: VM Dropdown Test
+  description: Prueba de dropdown
 
 spec:
   owner: group:default/team-platform
   type: service
 
   parameters:
-
     - title: Selección de VM
-      description: Seleccione la máquina virtual sobre la que desea ejecutar la automatización.
-
-      required:
-        - vmId
 
       properties:
-
-        vmId:
-          title: Virtual Machine
-          description: Seleccione una VM
+        vm:
+          title: Seleccione una VM
           type: string
-
           enum:
-            - "1"
-            - "2"
-            - "3"
-            - "4"
-            - "5"
-            - "7"
-
-          enumNames:
-            - "Bobbie Kshlerin"
-            - "Conrad Bogan"
-            - "Ronald Wehner"
-            - "Hector Feest II"
-            - "Cecilia Schuppe-Dicki"
-            - "Stuart Watsica"
-
-          ui:widget: select
-
-      dependencies:
-
-        vmId:
-
-          allOf:
-
-            - if:
-                properties:
-                  vmId:
-                    const: "7"
-
-              then:
-                properties:
-
-                  reboot:
-                    title: ¿Reiniciar la VM?
-                    description: Esta opción solamente aparece para la VM con ID 7.
-                    type: boolean
-                    default: false
-
-                required:
-                  - reboot
-
-  steps:
-
-    - id: show-selection
-      name: Mostrar selección
-      action: debug:log
-
-      input:
-        message: |
-          VM seleccionada:
-          ID = ${{ parameters.vmId }}
-
-          ¿Reiniciar?
-          ${{ parameters.reboot }}
+            - Bobbie Kshlerin
+            - Conrad Bogan
+            - Ronald Wehner
+            - Hector Feest II
+            - Cecilia Schuppe-Dicki
+            - Stuart Watsica
