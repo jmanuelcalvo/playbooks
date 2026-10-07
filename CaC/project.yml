@@ -1,0 +1,8 @@
+---
+controller_projects:
+  - name: Apache playbooks
+    organization: Default
+    state: present
+    scm_type: git
+    scm_url: https://github.com/ansible-tmm/instruqt-wyfp.git
+    wait: true
