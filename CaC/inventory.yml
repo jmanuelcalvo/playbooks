@@ -1,0 +1,19 @@
+---
+controller_inventories:
+  - name: Lab-Inventory
+    organization: Default
+
+controller_hosts:
+  - name: node1
+    inventory: Lab-Inventory
+    state: present
+  - name: node2
+    inventory: Lab-Inventory
+    state: present
+
+controller_groups:
+  - name: web
+    inventory: Lab-Inventory
+    hosts:
+      - node1
+      - node2
