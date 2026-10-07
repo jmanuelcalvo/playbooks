@@ -1,0 +1,18 @@
+---
+controller_workflows:
+  - name: Your first workflow
+    description: Create a Workflow from previous Job Templates
+    organization: Default
+    inventory: Lab-Inventory
+    simplified_workflow_nodes:
+      - identifier: apache101
+        unified_job_template: Install Apache
+        success_nodes:
+          - extended201
+          - motd201
+
+      - identifier: extended201
+        unified_job_template: Extended services
+
+      - identifier: motd201
+        unified_job_template: Set motd
