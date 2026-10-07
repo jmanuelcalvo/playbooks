@@ -1,0 +1,21 @@
+---
+controller_templates:
+  - name: Extended services
+    organization: Default
+    state: present
+    inventory: Lab-Inventory
+    become_enabled: true
+    playbook: extended_services.yml
+    project: Additional playbooks
+    credentials:
+      - lab-credentials
+
+  - name: Set motd
+    organization: Default
+    state: present
+    inventory: Lab-Inventory
+    become_enabled: true
+    playbook: motd_facts.yml
+    project: Additional playbooks
+    credentials:
+      - lab-credentials
