@@ -1,0 +1,41 @@
+
+---
+- name: Consultar VM desde una API REST
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    api_url: "https://6ac3eed3ae53bf25b80f2552.mockapi.io/VirtualMachines"
+
+  tasks:
+    - name: Consultar las VMs disponibles
+      ansible.builtin.uri:
+        url: "{{ api_url }}"
+        method: GET
+        return_content: true
+        status_code: 200
+      register: resultado_api
+
+    - name: Buscar la VM seleccionada
+      ansible.builtin.set_fact:
+        vm_seleccionada: >-
+          {{
+            resultado_api.json
+            | selectattr('id', 'equalto', vm_id | string)
+            | list
+          }}
+
+    - name: Validar que la VM exista
+      ansible.builtin.assert:
+        that:
+          - vm_seleccionada | length > 0
+        fail_msg: "No existe una VM con ID {{ vm_id }}"
+
+    - name: Mostrar la información encontrada
+      ansible.builtin.debug:
+        msg:
+          - "ID: {{ vm_seleccionada[0].id }}"
+          - "Nombre: {{ vm_seleccionada[0].name }}"
+          - "Entorno solicitado: {{ entorno | default('No especificado') }}"
+          - "Motivo: {{ motivo | default('No especificado') }}"
