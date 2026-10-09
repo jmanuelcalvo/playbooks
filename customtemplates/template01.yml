@@ -3,66 +3,30 @@ apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
 
 metadata:
-  namespace: default
-  name: vm-self-service-demo
-  title: VM Self-Service Demo
-  description: Consulta información de una VM mediante una API
-  tags:
-    - ansible
-    - self-service
-    - demo
+  name: vm-dynamic-survey-demo
+  title: VM Dynamic Survey Demo
+  description: Primera prueba de formulario para seleccionar una VM
 
 spec:
   owner: user:default/guest
-  type: automation
+  type: service
 
   parameters:
-    - title: Selección de VM
+    - title: Selección de máquina virtual
       required:
         - vm_id
       properties:
         vm_id:
-          title: ID de la VM
+          title: Máquina virtual
           type: string
-          description: Identificador de la VM que deseas consultar
-          default: "7"
+          description: Selecciona una VM de prueba
+          enum:
+            - "1"
+            - "2"
+            - "3"
+          enumNames:
+            - "grey — ID 1"
+            - "teal — ID 2"
+            - "gold — ID 3"
 
-        consultar_detalle:
-          title: ¿Deseas consultar información adicional?
-          type: boolean
-          default: true
-
-      dependencies:
-        consultar_detalle:
-          allOf:
-            - if:
-                properties:
-                  consultar_detalle:
-                    const: true
-              then:
-                properties:
-                  motivo:
-                    title: Motivo de la consulta
-                    type: string
-                    description: Describe brevemente el motivo
-                  entorno:
-                    title: Entorno
-                    type: string
-                    enum:
-                      - Desarrollo
-                      - Pruebas
-                      - Producción
-                    default: Desarrollo
-
-  steps:
-    - id: launch
-      name: Consultar VM mediante AAP
-      action: rhaap:launch-job-template
-      input:
-        values:
-          template: "Consultar VM API"
-          extraVariables:
-            vm_id: "${{ parameters.vm_id }}"
-            consultar_detalle: "${{ parameters.consultar_detalle }}"
-            motivo: "${{ parameters.motivo }}"
-            entorno: "${{ parameters.entorno }}"
+  steps: []
