@@ -1,0 +1,354 @@
+
+---
+- name: Windows - Limpieza de cache de navegadores
+  hosts: all
+  gather_facts: false
+  become: false
+
+  vars:
+    cleanup_log_dir: 'C:\Windows\Temp\Limpieza_Navegadores'
+    cleanup_log_file: '{{ cleanup_log_dir }}\{{ inventory_hostname }}.log'
+
+    browsers:
+      - name: Microsoft Edge
+        process: msedge
+      - name: Google Chrome
+        process: chrome
+      - name: Mozilla Firefox
+        process: firefox
+
+  tasks:
+
+    # ---------------------------------------------------------
+    # 1. PREVALIDACION
+    # ---------------------------------------------------------
+
+    - name: "01 - Validar acceso a Windows y usuario de ejecucion"
+      ansible.windows.win_powershell:
+        script: |
+          $Ansible.Result = @{
+            computer = $env:COMPUTERNAME
+            user = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
+            local_appdata = $env:LOCALAPPDATA
+            powershell_version = $PSVersionTable.PSVersion.ToString()
+          }
+          Write-Output "Windows accesible."
+      register: windows_precheck
+
+    - name: "02 - Mostrar datos de ejecucion"
+      ansible.builtin.debug:
+        var: windows_precheck.result
+
+    - name: "03 - Validar directorio LOCALAPPDATA"
+      ansible.windows.win_powershell:
+        script: |
+          if (-not $env:LOCALAPPDATA -or
+              -not (Test-Path -LiteralPath $env:LOCALAPPDATA)) {
+            throw "LOCALAPPDATA no existe para el usuario de conexion."
+          }
+          Write-Output "LOCALAPPDATA: $env:LOCALAPPDATA"
+
+    # ---------------------------------------------------------
+    # 2. INICIALIZAR LOG
+    # ---------------------------------------------------------
+
+    - name: "04 - Crear directorio de logs"
+      ansible.windows.win_file:
+        path: '{{ cleanup_log_dir }}'
+        state: directory
+
+    - name: "05 - Inicializar log de ejecucion"
+      ansible.windows.win_powershell:
+        script: |
+          $log = '{{ cleanup_log_file }}'
+          $lines = @(
+            '============================================================'
+            'LIMPIEZA DE CACHE DE NAVEGADORES'
+            "Equipo: $env:COMPUTERNAME"
+            "Usuario: $([System.Security.Principal.WindowsIdentity]::GetCurrent().Name)"
+            "Inicio: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+            '============================================================'
+          )
+          Set-Content -LiteralPath $log -Value $lines -Encoding UTF8
+          $Ansible.Changed = $true
+          Write-Output "Log inicializado: $log"
+
+    # ---------------------------------------------------------
+    # 3. CERRAR NAVEGADORES
+    # ---------------------------------------------------------
+
+    - name: "06 - Cerrar Microsoft Edge"
+      ansible.windows.win_powershell:
+        script: |
+          $log = '{{ cleanup_log_file }}'
+          $p = @(Get-Process -Name msedge -ErrorAction SilentlyContinue)
+
+          Add-Content -LiteralPath $log -Value ''
+          Add-Content -LiteralPath $log -Value '[Microsoft Edge]'
+
+          if ($p.Count -eq 0) {
+            Add-Content -LiteralPath $log -Value 'No estaba ejecutandose.'
+            Write-Output 'Edge no estaba ejecutandose.'
+          }
+          else {
+            $p | Stop-Process -Force -ErrorAction Stop
+            Add-Content -LiteralPath $log -Value 'Procesos cerrados.'
+            $Ansible.Changed = $true
+            Write-Output 'Procesos de Edge cerrados.'
+          }
+
+    - name: "07 - Cerrar Google Chrome"
+      ansible.windows.win_powershell:
+        script: |
+          $log = '{{ cleanup_log_file }}'
+          $p = @(Get-Process -Name chrome -ErrorAction SilentlyContinue)
+
+          Add-Content -LiteralPath $log -Value ''
+          Add-Content -LiteralPath $log -Value '[Google Chrome]'
+
+          if ($p.Count -eq 0) {
+            Add-Content -LiteralPath $log -Value 'No estaba ejecutandose.'
+            Write-Output 'Chrome no estaba ejecutandose.'
+          }
+          else {
+            $p | Stop-Process -Force -ErrorAction Stop
+            Add-Content -LiteralPath $log -Value 'Procesos cerrados.'
+            $Ansible.Changed = $true
+            Write-Output 'Procesos de Chrome cerrados.'
+          }
+
+    - name: "08 - Cerrar Mozilla Firefox"
+      ansible.windows.win_powershell:
+        script: |
+          $log = '{{ cleanup_log_file }}'
+          $p = @(Get-Process -Name firefox -ErrorAction SilentlyContinue)
+
+          Add-Content -LiteralPath $log -Value ''
+          Add-Content -LiteralPath $log -Value '[Mozilla Firefox]'
+
+          if ($p.Count -eq 0) {
+            Add-Content -LiteralPath $log -Value 'No estaba ejecutandose.'
+            Write-Output 'Firefox no estaba ejecutandose.'
+          }
+          else {
+            $p | Stop-Process -Force -ErrorAction Stop
+            Add-Content -LiteralPath $log -Value 'Procesos cerrados.'
+            $Ansible.Changed = $true
+            Write-Output 'Procesos de Firefox cerrados.'
+          }
+
+    # ---------------------------------------------------------
+    # 4. LIMPIEZA EDGE
+    # ---------------------------------------------------------
+
+    - name: "09 - Limpiar cache de Microsoft Edge"
+      ansible.windows.win_powershell:
+        script: |
+          $log = '{{ cleanup_log_file }}'
+          $root = Join-Path $env:LOCALAPPDATA 'Microsoft\Edge\User Data'
+          $changed = $false
+
+          Add-Content -LiteralPath $log -Value ''
+          Add-Content -LiteralPath $log -Value '--- Microsoft Edge ---'
+
+          if (-not (Test-Path -LiteralPath $root)) {
+            Add-Content -LiteralPath $log -Value "Ruta no encontrada: $root"
+            Write-Output "Edge no instalado o perfil no encontrado."
+            $Ansible.Result = @{ browser = 'Edge'; status = 'not_found' }
+            return
+          }
+
+          $profiles = @()
+          foreach ($name in @('Default', 'Guest Profile')) {
+            $path = Join-Path $root $name
+            if (Test-Path -LiteralPath $path -PathType Container) {
+              $profiles += Get-Item -LiteralPath $path
+            }
+          }
+          $profiles += @(
+            Get-ChildItem -LiteralPath $root -Directory -Force |
+            Where-Object { $_.Name -like 'Profile *' }
+          )
+
+          $removed = 0
+          $errors = 0
+
+          foreach ($profile in $profiles) {
+            foreach ($name in @('Cache', 'Code Cache', 'GPUCache')) {
+              $target = Join-Path $profile.FullName $name
+
+              if (Test-Path -LiteralPath $target -PathType Container) {
+                try {
+                  $count = @(Get-ChildItem -LiteralPath $target -File `
+                    -Recurse -Force -ErrorAction SilentlyContinue).Count
+
+                  Remove-Item -LiteralPath $target -Recurse -Force `
+                    -ErrorAction Stop
+
+                  $removed += $count
+                  $changed = $true
+                  Add-Content -LiteralPath $log -Value "OK: $target ($count archivos)"
+                }
+                catch {
+                  $errors++
+                  Add-Content -LiteralPath $log -Value "ERROR: $target - $_"
+                }
+              }
+            }
+          }
+
+          $Ansible.Changed = $changed
+          $Ansible.Result = @{
+            browser = 'Edge'
+            profiles = $profiles.Count
+            files_detected = $removed
+            errors = $errors
+          }
+          Write-Output "Edge: perfiles=$($profiles.Count), archivos_detectados=$removed, errores=$errors"
+
+    # ---------------------------------------------------------
+    # 5. LIMPIEZA CHROME
+    # ---------------------------------------------------------
+
+    - name: "10 - Limpiar cache de Google Chrome"
+      ansible.windows.win_powershell:
+        script: |
+          $log = '{{ cleanup_log_file }}'
+          $root = Join-Path $env:LOCALAPPDATA 'Google\Chrome\User Data'
+          $changed = $false
+
+          Add-Content -LiteralPath $log -Value ''
+          Add-Content -LiteralPath $log -Value '--- Google Chrome ---'
+
+          if (-not (Test-Path -LiteralPath $root)) {
+            Add-Content -LiteralPath $log -Value "Ruta no encontrada: $root"
+            Write-Output "Chrome no instalado o perfil no encontrado."
+            $Ansible.Result = @{ browser = 'Chrome'; status = 'not_found' }
+            return
+          }
+
+          $profiles = @()
+          foreach ($name in @('Default', 'Guest Profile')) {
+            $path = Join-Path $root $name
+            if (Test-Path -LiteralPath $path -PathType Container) {
+              $profiles += Get-Item -LiteralPath $path
+            }
+          }
+          $profiles += @(
+            Get-ChildItem -LiteralPath $root -Directory -Force |
+            Where-Object { $_.Name -like 'Profile *' }
+          )
+
+          $removed = 0
+          $errors = 0
+
+          foreach ($profile in $profiles) {
+            foreach ($name in @('Cache', 'Code Cache', 'GPUCache')) {
+              $target = Join-Path $profile.FullName $name
+
+              if (Test-Path -LiteralPath $target -PathType Container) {
+                try {
+                  $count = @(Get-ChildItem -LiteralPath $target -File `
+                    -Recurse -Force -ErrorAction SilentlyContinue).Count
+
+                  Remove-Item -LiteralPath $target -Recurse -Force `
+                    -ErrorAction Stop
+
+                  $removed += $count
+                  $changed = $true
+                  Add-Content -LiteralPath $log -Value "OK: $target ($count archivos)"
+                }
+                catch {
+                  $errors++
+                  Add-Content -LiteralPath $log -Value "ERROR: $target - $_"
+                }
+              }
+            }
+          }
+
+          $Ansible.Changed = $changed
+          $Ansible.Result = @{
+            browser = 'Chrome'
+            profiles = $profiles.Count
+            files_detected = $removed
+            errors = $errors
+          }
+          Write-Output "Chrome: perfiles=$($profiles.Count), archivos_detectados=$removed, errores=$errors"
+
+    # ---------------------------------------------------------
+    # 6. LIMPIEZA FIREFOX
+    # ---------------------------------------------------------
+
+    - name: "11 - Limpiar cache de Mozilla Firefox"
+      ansible.windows.win_powershell:
+        script: |
+          $log = '{{ cleanup_log_file }}'
+          $root = Join-Path $env:LOCALAPPDATA 'Mozilla\Firefox\Profiles'
+          $changed = $false
+
+          Add-Content -LiteralPath $log -Value ''
+          Add-Content -LiteralPath $log -Value '--- Mozilla Firefox ---'
+
+          if (-not (Test-Path -LiteralPath $root)) {
+            Add-Content -LiteralPath $log -Value "Ruta no encontrada: $root"
+            Write-Output "Firefox no instalado o perfil no encontrado."
+            $Ansible.Result = @{ browser = 'Firefox'; status = 'not_found' }
+            return
+          }
+
+          $profiles = @(
+            Get-ChildItem -LiteralPath $root -Directory -Force
+          )
+          $removed = 0
+          $errors = 0
+
+          foreach ($profile in $profiles) {
+            $target = Join-Path $profile.FullName 'cache2'
+
+            if (Test-Path -LiteralPath $target -PathType Container) {
+              try {
+                $count = @(Get-ChildItem -LiteralPath $target -File `
+                  -Recurse -Force -ErrorAction SilentlyContinue).Count
+
+                Remove-Item -LiteralPath $target -Recurse -Force `
+                  -ErrorAction Stop
+
+                $removed += $count
+                $changed = $true
+                Add-Content -LiteralPath $log -Value "OK: $target ($count archivos)"
+              }
+              catch {
+                $errors++
+                Add-Content -LiteralPath $log -Value "ERROR: $target - $_"
+              }
+            }
+          }
+
+          $Ansible.Changed = $changed
+          $Ansible.Result = @{
+            browser = 'Firefox'
+            profiles = $profiles.Count
+            files_detected = $removed
+            errors = $errors
+          }
+          Write-Output "Firefox: perfiles=$($profiles.Count), archivos_detectados=$removed, errores=$errors"
+
+    # ---------------------------------------------------------
+    # 7. CIERRE Y RESUMEN
+    # ---------------------------------------------------------
+
+    - name: "12 - Registrar fin de la ejecucion"
+      ansible.windows.win_powershell:
+        script: |
+          $log = '{{ cleanup_log_file }}'
+          Add-Content -LiteralPath $log -Value ''
+          Add-Content -LiteralPath $log -Value "Fin: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+          Add-Content -LiteralPath $log -Value '============================================================'
+          Write-Output "Log finalizado: $log"
+
+    - name: "13 - Mostrar ubicacion del log"
+      ansible.builtin.debug:
+        msg:
+          - "Equipo: {{ inventory_hostname }}"
+          - "Log: {{ cleanup_log_file }}"
+          - "Revisar las tareas 09, 10 y 11 para el resultado de cada navegador."
