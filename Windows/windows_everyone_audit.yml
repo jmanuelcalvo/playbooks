@@ -1,0 +1,143 @@
+
+---
+- name: Windows - Audit Everyone NTFS Permissions
+  hosts: all
+  gather_facts: false
+
+  vars:
+    # Directorios que queremos auditar
+    scan_paths:
+      - 'C:\Shares'
+      - 'D:\Data'
+
+  tasks:
+
+    - name: Validate scan paths
+      ansible.windows.win_stat:
+        path: "{{ item }}"
+      loop: "{{ scan_paths }}"
+      register: path_validation
+
+    - name: Scan folders for Everyone permissions
+      ansible.windows.win_powershell:
+        parameters:
+          Paths: "{{ scan_paths }}"
+        script: |
+          param(
+              [string[]]$Paths
+          )
+
+          $EveryoneSID = 'S-1-1-0'
+          $Findings = [System.Collections.Generic.List[object]]::new()
+          $Errors = [System.Collections.Generic.List[object]]::new()
+          $ScannedFolders = 0
+
+          foreach ($RootPath in $Paths) {
+
+              if (-not (Test-Path -LiteralPath $RootPath)) {
+                  $Errors.Add([PSCustomObject]@{
+                      Path = $RootPath
+                      Error = "Path does not exist"
+                  })
+                  continue
+              }
+
+              # Include root directory and descendants
+              $Folders = @(
+                  Get-Item -LiteralPath $RootPath
+              )
+
+              $EnumerationErrors = @()
+
+              $Folders += @(
+                  Get-ChildItem -LiteralPath $RootPath `
+                      -Directory -Recurse -Force `
+                      -ErrorAction SilentlyContinue `
+                      -ErrorVariable +EnumerationErrors
+              )
+
+              foreach ($EnumerationError in $EnumerationErrors) {
+                  $Errors.Add([PSCustomObject]@{
+                      Path = $RootPath
+                      Error = $EnumerationError.Exception.Message
+                  })
+              }
+
+              foreach ($Folder in $Folders) {
+
+                  $ScannedFolders++
+
+                  try {
+
+                      $ACL = Get-Acl -LiteralPath $Folder.FullName `
+                          -ErrorAction Stop
+
+                      $Rules = $ACL.GetAccessRules(
+                          $true,
+                          $true,
+                          [System.Security.Principal.SecurityIdentifier]
+                      )
+
+                      foreach ($Rule in $Rules) {
+
+                          if ($Rule.IdentityReference.Value -eq $EveryoneSID) {
+
+                              $Findings.Add([PSCustomObject]@{
+
+                                  Path = $Folder.FullName
+
+                                  Identity = 'Everyone'
+
+                                  SID = $EveryoneSID
+
+                                  Rights = $Rule.FileSystemRights.ToString()
+
+                                  AccessType = $Rule.AccessControlType.ToString()
+
+                                  IsInherited = $Rule.IsInherited
+
+                                  InheritanceFlags = $Rule.InheritanceFlags.ToString()
+
+                                  PropagationFlags = $Rule.PropagationFlags.ToString()
+
+                              })
+                          }
+                      }
+                  }
+                  catch {
+
+                      $Errors.Add([PSCustomObject]@{
+                          Path = $Folder.FullName
+                          Error = $_.Exception.Message
+                      })
+                  }
+              }
+          }
+
+          $Ansible.Result = @{
+              scanned_folders = $ScannedFolders
+              findings = @($Findings)
+              errors = @($Errors)
+              total_findings = $Findings.Count
+              total_errors = $Errors.Count
+          }
+
+          $Ansible.Changed = $false
+
+      register: acl_scan
+
+    - name: Display audit summary
+      ansible.builtin.debug:
+        msg:
+          - "Folders scanned: {{ acl_scan.result.scanned_folders }}"
+          - "Everyone permissions found: {{ acl_scan.result.total_findings }}"
+          - "Errors: {{ acl_scan.result.total_errors }}"
+
+    - name: Display Everyone permissions
+      ansible.builtin.debug:
+        var: acl_scan.result.findings
+
+    - name: Display scanning errors
+      ansible.builtin.debug:
+        var: acl_scan.result.errors
+      when: acl_scan.result.total_errors | int > 0
