@@ -1,89 +1,154 @@
 
 ---
 # ============================================================
-# PLAY 1: WINDOWS NTFS PERMISSIONS AUDIT
+# WINDOWS NTFS PERMISSIONS AUDIT - VERSION 2.0
+# Full Scan | Multi-server | Consolidated CSV
 # ============================================================
 
-- name: Audit Windows NTFS permissions for Everyone
-  hosts: all
+
+# ============================================================
+# PLAY 1: DISCOVERY AND SECURITY AUDIT
+# ============================================================
+
+- name: Full Windows NTFS permissions audit
+  hosts: windows
   gather_facts: false
 
   tasks:
 
-    - name: Validate audit paths
-      ansible.builtin.assert:
-        that:
-          - audit_paths is defined
-          - audit_paths | length > 0
-        fail_msg: "No audit paths configured for this server."
-
-    - name: Inspect NTFS permissions for Everyone
+    - name: Discover local drives and inspect NTFS permissions
       ansible.windows.win_powershell:
-        parameters:
-          Paths: "{{ audit_paths }}"
 
         script: |
-          param(
-              [string[]]$Paths
-          )
 
           $Findings = [System.Collections.Generic.List[object]]::new()
           $Errors = [System.Collections.Generic.List[string]]::new()
 
-          # Discover SMB shares
+          $ScannedDirectories = 0
+          $SkippedDirectories = 0
+
+          # --------------------------------------------------
+          # Exclusion policy
+          # --------------------------------------------------
+
+          $ExcludedNames = @(
+              'Windows',
+              'Program Files',
+              'Program Files (x86)',
+              'ProgramData',
+              '$Recycle.Bin',
+              'System Volume Information',
+              'Recovery',
+              'Config.Msi',
+              'WindowsApps'
+          )
+
+          # --------------------------------------------------
+          # Discover local fixed drives
+          # --------------------------------------------------
+
           try {
-              $Shares = @(Get-SmbShare -ErrorAction Stop)
-          }
-          catch {
-              $Shares = @()
-              $Errors.Add("Could not enumerate SMB shares: $($_.Exception.Message)")
-          }
 
-          foreach ($RootPath in $Paths) {
-
-              if (-not (Test-Path -LiteralPath $RootPath -PathType Container)) {
-                  $Errors.Add("Path does not exist: $RootPath")
-                  continue
-              }
-
-              # Include root directory and all subdirectories
-              $RootItem = Get-Item -LiteralPath $RootPath
-
-              $EnumerationErrors = @()
-
-              $Directories = @($RootItem) + @(
-                  Get-ChildItem -LiteralPath $RootPath `
-                      -Directory `
-                      -Recurse `
-                      -Force `
-                      -ErrorAction SilentlyContinue `
-                      -ErrorVariable +EnumerationErrors
+              $Drives = @(
+                  Get-CimInstance -ClassName Win32_LogicalDisk `
+                      -Filter "DriveType = 3" `
+                      -ErrorAction Stop |
+                  Select-Object -ExpandProperty DeviceID
               )
 
-              foreach ($EnumerationError in $EnumerationErrors) {
-                  $Errors.Add("Directory enumeration: $($EnumerationError.Exception.Message)")
-              }
+          }
+          catch {
 
-              foreach ($Directory in $Directories) {
+              $Errors.Add(
+                  "Drive discovery failed: $($_.Exception.Message)"
+              )
+
+              $Drives = @()
+          }
+
+          # --------------------------------------------------
+          # Discover SMB shares
+          # --------------------------------------------------
+
+          try {
+
+              $Shares = @(Get-SmbShare -ErrorAction Stop)
+
+          }
+          catch {
+
+              $Errors.Add(
+                  "SMB share discovery failed: $($_.Exception.Message)"
+              )
+
+              $Shares = @()
+          }
+
+          # --------------------------------------------------
+          # Process each local drive
+          # --------------------------------------------------
+
+          foreach ($Drive in $Drives) {
+
+              $Stack = [System.Collections.Generic.Stack[string]]::new()
+
+              $Stack.Push("$Drive\")
+
+              while ($Stack.Count -gt 0) {
+
+                  $CurrentPath = $Stack.Pop()
+
+                  $DirectoryName = Split-Path $CurrentPath -Leaf
+
+                  # Exclude protected/system directories
+                  if ($ExcludedNames -contains $DirectoryName) {
+
+                      $SkippedDirectories++
+                      continue
+                  }
 
                   try {
 
-                      $ACL = Get-Acl -LiteralPath $Directory.FullName -ErrorAction Stop
+                      $Item = Get-Item -LiteralPath $CurrentPath `
+                          -Force -ErrorAction Stop
 
-                      # Find the SMB share containing this directory
-                      $CurrentPath = $Directory.FullName.TrimEnd('\')
+                      # Do not follow junctions or reparse points
+                      if (($Item.Attributes -band
+                          [System.IO.FileAttributes]::ReparsePoint) -ne 0) {
+
+                          $SkippedDirectories++
+                          continue
+                      }
+
+                      # --------------------------------------------------
+                      # Inspect NTFS ACL
+                      # --------------------------------------------------
+
+                      $ACL = Get-Acl -LiteralPath $CurrentPath `
+                          -ErrorAction Stop
+
+                      $ScannedDirectories++
+
+                      # --------------------------------------------------
+                      # Find matching SMB share
+                      # Use the longest matching share path
+                      # --------------------------------------------------
+
+                      $NormalizedPath = $CurrentPath.TrimEnd('\')
 
                       $MatchingShare = $Shares |
                           Where-Object {
+
                               $SharePath = $_.Path.TrimEnd('\')
 
-                              $CurrentPath.Equals(
+                              $NormalizedPath.Equals(
                                   $SharePath,
                                   [System.StringComparison]::OrdinalIgnoreCase
-                              ) -or $CurrentPath.StartsWith(
+                              ) -or $NormalizedPath.StartsWith(
                                   $SharePath + '\',
                                   [System.StringComparison]::OrdinalIgnoreCase
                               )
+
                           } |
                           Sort-Object { $_.Path.Length } -Descending |
                           Select-Object -First 1
@@ -95,46 +160,106 @@
                           $ShareName = "Not shared"
                       }
 
+                      # --------------------------------------------------
+                      # Identify Everyone permissions by SID
+                      # --------------------------------------------------
+
                       foreach ($Permission in $ACL.Access) {
 
                           try {
+
                               $SID = $Permission.IdentityReference.Translate(
                                   [System.Security.Principal.SecurityIdentifier]
                               ).Value
+
                           }
                           catch {
+
                               $SID = $null
                           }
 
-                          # Everyone SID = S-1-1-0
                           if ($SID -eq "S-1-1-0") {
 
                               $Findings.Add(
+
                                   [PSCustomObject]@{
-                                      Server      = $env:COMPUTERNAME
-                                      ShareName   = $ShareName
-                                      Path        = $Directory.FullName
-                                      Member      = "Everyone"
-                                      Rights      = $Permission.FileSystemRights.ToString()
-                                      AccessType  = $Permission.AccessControlType.ToString()
-                                      IsInherited = $Permission.IsInherited
+
+                                      Server       = $env:COMPUTERNAME
+                                      ShareName    = $ShareName
+                                      Path         = $CurrentPath
+                                      Member       = "Everyone"
+                                      Rights       = $Permission.FileSystemRights.ToString()
+                                      AccessType   = $Permission.AccessControlType.ToString()
+                                      IsInherited  = $Permission.IsInherited
                                   }
+
                               )
                           }
                       }
+
+                      # --------------------------------------------------
+                      # Discover child directories
+                      # --------------------------------------------------
+
+                      try {
+
+                          $Children = @(
+                              Get-ChildItem -LiteralPath $CurrentPath `
+                                  -Directory `
+                                  -Force `
+                                  -ErrorAction Stop
+                          )
+
+                          foreach ($Child in $Children) {
+
+                              if ($ExcludedNames -contains $Child.Name) {
+
+                                  $SkippedDirectories++
+                                  continue
+                              }
+
+                              # Avoid junctions and symbolic directory links
+                              if (($Child.Attributes -band
+                                  [System.IO.FileAttributes]::ReparsePoint) -ne 0) {
+
+                                  $SkippedDirectories++
+                                  continue
+                              }
+
+                              $Stack.Push($Child.FullName)
+                          }
+
+                      }
+                      catch {
+
+                          $Errors.Add(
+                              "Directory enumeration failed: ${CurrentPath} - $($_.Exception.Message)"
+                          )
+                      }
+
                   }
                   catch {
+
                       $Errors.Add(
-                          "ACL inspection failed on $($Directory.FullName): $($_.Exception.Message)"
+                          "Directory inspection failed: ${CurrentPath} - $($_.Exception.Message)"
                       )
                   }
               }
           }
 
+          # --------------------------------------------------
           # Return structured results to Ansible
+          # --------------------------------------------------
+
           $Ansible.Result = @{
-              findings = @($Findings.ToArray())
-              errors   = @($Errors.ToArray())
+
+              server               = $env:COMPUTERNAME
+              drives               = @($Drives)
+              findings             = @($Findings.ToArray())
+              errors               = @($Errors.ToArray())
+              scanned_directories  = $ScannedDirectories
+              skipped_directories  = $SkippedDirectories
+
           }
 
           $Ansible.Changed = $false
@@ -142,61 +267,79 @@
       register: acl_scan
       changed_when: false
 
-    - name: Save audit results
+
+    - name: Save server audit results
       ansible.builtin.set_fact:
+
         acl_audit_findings: "{{ acl_scan.result.findings | default([]) }}"
+
         acl_audit_errors: "{{ acl_scan.result.errors | default([]) }}"
+
+        acl_audit_drives: "{{ acl_scan.result.drives | default([]) }}"
+
+        acl_audit_scanned: "{{ acl_scan.result.scanned_directories | default(0) }}"
+
+        acl_audit_skipped: "{{ acl_scan.result.skipped_directories | default(0) }}"
+
       changed_when: false
 
 
 # ============================================================
-# PLAY 2: CONSOLIDATED REPORT AND CSV EXPORT
+# PLAY 2: CONSOLIDATED REPORT AND CSV GENERATION
 # ============================================================
 
-- name: Consolidate Windows audit report
+- name: Consolidate Windows audit results
   hosts: localhost
   connection: local
   gather_facts: false
 
   vars:
+
     csv_report_path: "/tmp/windows_ntfs_permissions_audit.csv"
 
   tasks:
 
     # --------------------------------------------------------
-    # 1. Initialize report
+    # Initialize report variables
     # --------------------------------------------------------
 
     - name: Initialize consolidated report
       ansible.builtin.set_fact:
+
         audit_report: []
+
         audit_errors: []
 
+        audit_server_summary: []
+
+
     # --------------------------------------------------------
-    # 2. Collect findings from all Windows servers
+    # Collect findings from all Windows servers
     # --------------------------------------------------------
 
-    - name: Collect findings from audited Windows servers
+    - name: Collect findings
       ansible.builtin.set_fact:
+
         audit_report: >-
           {{
             audit_report +
             (hostvars[item].acl_audit_findings | default([]))
           }}
-      loop: "{{ groups['all'] }}"
+
+      loop: "{{ groups['windows'] }}"
       loop_control:
         label: "{{ item }}"
-      when:
-        - item != 'localhost'
-        - hostvars[item].acl_audit_findings is defined
+
       changed_when: false
 
+
     # --------------------------------------------------------
-    # 3. Collect audit errors
+    # Collect errors from all Windows servers
     # --------------------------------------------------------
 
-    - name: Collect errors from Windows servers
+    - name: Collect audit errors
       ansible.builtin.set_fact:
+
         audit_errors: >-
           {{
             audit_errors +
@@ -207,42 +350,92 @@
               | list
             )
           }}
-      loop: "{{ groups['all'] }}"
+
+      loop: "{{ groups['windows'] }}"
       loop_control:
         label: "{{ item }}"
-      when:
-        - item != 'localhost'
-        - hostvars[item].acl_audit_errors is defined
+
       changed_when: false
 
+
     # --------------------------------------------------------
-    # 4. Generate CSV report
+    # Collect server statistics
+    # --------------------------------------------------------
+
+    - name: Collect server statistics
+      ansible.builtin.set_fact:
+
+        audit_server_summary: >-
+          {{
+            audit_server_summary +
+            [
+              {
+                'server': item,
+                'drives': hostvars[item].acl_audit_drives | default([]),
+                'scanned': hostvars[item].acl_audit_scanned | default(0),
+                'skipped': hostvars[item].acl_audit_skipped | default(0),
+                'findings': hostvars[item].acl_audit_findings | default([]) | length,
+                'errors': hostvars[item].acl_audit_errors | default([]) | length
+              }
+            ]
+          }}
+
+      loop: "{{ groups['windows'] }}"
+      loop_control:
+        label: "{{ item }}"
+
+      changed_when: false
+
+
+    # --------------------------------------------------------
+    # Generate consolidated CSV
     # --------------------------------------------------------
 
     - name: Generate consolidated CSV report
       ansible.builtin.copy:
+
         dest: "{{ csv_report_path }}"
+
         mode: '0600'
+
         content: |
           "Server","ShareName","Path","Member","Rights","AccessType","IsInherited"
           {% for finding in audit_report %}
           "{{ finding.Server | string | replace('"', '""') }}","{{ finding.ShareName | string | replace('"', '""') }}","{{ finding.Path | string | replace('"', '""') }}","{{ finding.Member | string | replace('"', '""') }}","{{ finding.Rights | string | replace('"', '""') }}","{{ finding.AccessType | string | replace('"', '""') }}","{{ finding.IsInherited }}"
           {% endfor %}
+
       changed_when: false
 
+
     # --------------------------------------------------------
-    # 5. Display complete consolidated report
+    # Display consolidated audit report
     # --------------------------------------------------------
 
-    - name: Display consolidated Windows security audit
+    - name: Display consolidated Windows NTFS audit report
       ansible.builtin.debug:
+
         msg: |
-          ================================================================
-                       WINDOWS NTFS PERMISSIONS AUDIT
-          ================================================================
+          ========================================================================
+                         WINDOWS NTFS PERMISSIONS AUDIT
+          ========================================================================
+
+          SERVER DISCOVERY AND SCAN SUMMARY
+
+          {% for server in audit_server_summary %}
+          Server: {{ server.server }}
+          Drives: {{ server.drives | join(', ') }}
+          Scanned directories: {{ server.scanned }}
+          Skipped directories: {{ server.skipped }}
+          Findings: {{ server.findings }}
+          Errors: {{ server.errors }}
+
+          ------------------------------------------------------------------------
+          {% endfor %}
+
+          CONSOLIDATED SECURITY FINDINGS
 
           SERVER             | SHARENAME          | PATH
-          -------------------|--------------------|----------------------------
+          -------------------|--------------------|--------------------------------
 
           {% for finding in audit_report %}
           {{ finding.Server }} | {{ finding.ShareName }} | {{ finding.Path }}
@@ -252,28 +445,20 @@
               Inherited: {{ finding.IsInherited }}
 
           {% endfor %}
-          ================================================================
+
+          ========================================================================
+          TOTAL SERVERS: {{ audit_server_summary | length }}
+          TOTAL DIRECTORIES SCANNED: {{ audit_server_summary | map(attribute='scanned') | map('int') | sum }}
           TOTAL FINDINGS: {{ audit_report | length }}
-          TOTAL ERRORS:   {{ audit_errors | length }}
-          ================================================================
+          TOTAL ERRORS: {{ audit_errors | length }}
+          ========================================================================
 
           CSV REPORT: {{ csv_report_path }}
 
           {% if audit_errors | length > 0 %}
           AUDIT ERRORS:
+
           {% for error in audit_errors %}
           - {{ error }}
           {% endfor %}
           {% endif %}
-
-    # --------------------------------------------------------
-    # 6. Display CSV location
-    # --------------------------------------------------------
-
-    - name: Confirm CSV report generation
-      ansible.builtin.debug:
-        msg:
-          status: "CSV generated"
-          file: "{{ csv_report_path }}"
-          records: "{{ audit_report | length }}"
-          errors: "{{ audit_errors | length }}"
