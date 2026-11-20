@@ -148,56 +148,47 @@
           errors: "{{ acl_audit_errors | length }}"
 
 
+
 - name: Consolidate Windows audit report
   hosts: localhost
-  connection: local
   gather_facts: false
-
-  vars:
-    report_group: windows
-    audit_report: []
 
   tasks:
 
-    - name: Consolidate findings from all Windows servers
+    - name: Initialize consolidated report
+      ansible.builtin.set_fact:
+        audit_report: []
+
+    - name: Collect findings from Windows servers
       ansible.builtin.set_fact:
         audit_report: >-
-          {{ audit_report +
-             (hostvars[item].acl_audit_findings | default([])) }}
-      loop: "{{ groups[report_group] | default([]) }}"
+          {{
+            audit_report +
+            (hostvars[item].acl_audit_findings | default([]))
+          }}
+      loop: "{{ groups['windows'] }}"
       loop_control:
         label: "{{ item }}"
 
-    - name: Display report header
+    - name: Display consolidated report header
       ansible.builtin.debug:
         msg: "SERVER | SHARENAME | PATH | MEMBER | RIGHTS | ACCESS TYPE | INHERITED"
 
     - name: Display consolidated audit report
       ansible.builtin.debug:
         msg: >-
-          {{ '%-18s | %-18s | %-35s | %-10s | %-20s | %-8s | %s'
-             | format(
-                 item.Server,
-                 item.ShareName,
-                 item.Path,
-                 item.Member,
-                 item.Rights,
-                 item.AccessType,
-                 item.IsInherited
-             ) }}
+          {{ item.Server }} |
+          {{ item.ShareName }} |
+          {{ item.Path }} |
+          {{ item.Member }} |
+          {{ item.Rights }} |
+          {{ item.AccessType }} |
+          {{ item.IsInherited }}
       loop: "{{ audit_report }}"
       loop_control:
         label: "{{ item.Server }} - {{ item.Path }}"
 
-    - name: Display servers without findings
+    - name: Display message when no findings exist
       ansible.builtin.debug:
-        msg: "No Everyone permissions found on the audited paths."
+        msg: "No Everyone permissions found."
       when: audit_report | length == 0
-
-    - name: Display audit errors
-      ansible.builtin.debug:
-        msg: "{{ item }}: {{ hostvars[item].acl_audit_errors }}"
-      loop: "{{ groups[report_group] | default([]) }}"
-      when:
-        - hostvars[item].acl_audit_errors is defined
-        - hostvars[item].acl_audit_errors | length > 0
