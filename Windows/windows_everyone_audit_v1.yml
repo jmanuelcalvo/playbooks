@@ -1,0 +1,203 @@
+
+---
+- name: Audit Windows NTFS permissions for Everyone
+  hosts: windows
+  gather_facts: false
+
+  vars:
+    audit_paths:
+      - 'C:\Shares'
+
+  tasks:
+
+    - name: Inspect NTFS permissions for Everyone
+      ansible.windows.win_powershell:
+        parameters:
+          Paths: "{{ audit_paths }}"
+
+        script: |
+          param(
+              [string[]]$Paths
+          )
+
+          $Findings = [System.Collections.Generic.List[object]]::new()
+          $Errors = [System.Collections.Generic.List[object]]::new()
+
+          # Discover SMB shares on the target server
+          try {
+              $Shares = @(Get-SmbShare -ErrorAction Stop)
+          }
+          catch {
+              $Shares = @()
+              $Errors.Add("Could not enumerate SMB shares: $($_.Exception.Message)")
+          }
+
+          foreach ($RootPath in $Paths) {
+
+              if (-not (Test-Path -LiteralPath $RootPath -PathType Container)) {
+                  $Errors.Add("Path does not exist: $RootPath")
+                  continue
+              }
+
+              # Include root directory and all subdirectories
+              $RootItem = Get-Item -LiteralPath $RootPath
+
+              $EnumerationErrors = @()
+
+              $Directories = @($RootItem) + @(
+                  Get-ChildItem -LiteralPath $RootPath `
+                      -Directory `
+                      -Recurse `
+                      -Force `
+                      -ErrorAction SilentlyContinue `
+                      -ErrorVariable +EnumerationErrors
+              )
+
+              foreach ($EnumerationError in $EnumerationErrors) {
+                  $Errors.Add("Directory enumeration: $($EnumerationError.Exception.Message)")
+              }
+
+              foreach ($Directory in $Directories) {
+
+                  try {
+                      $ACL = Get-Acl -LiteralPath $Directory.FullName -ErrorAction Stop
+
+                      # Find the SMB share containing this directory
+                      $CurrentPath = $Directory.FullName.TrimEnd('\')
+
+                      $MatchingShare = $Shares |
+                          Where-Object {
+                              $SharePath = $_.Path.TrimEnd('\')
+
+                              $CurrentPath.Equals(
+                                  $SharePath,
+                                  [System.StringComparison]::OrdinalIgnoreCase
+                              ) -or $CurrentPath.StartsWith(
+                                  $SharePath + '\',
+                                  [System.StringComparison]::OrdinalIgnoreCase
+                              )
+                          } |
+                          Sort-Object { $_.Path.Length } -Descending |
+                          Select-Object -First 1
+
+                      if ($MatchingShare) {
+                          $ShareName = $MatchingShare.Name
+                      }
+                      else {
+                          $ShareName = "Not shared"
+                      }
+
+                      foreach ($Permission in $ACL.Access) {
+
+                          try {
+                              $SID = $Permission.IdentityReference.Translate(
+                                  [System.Security.Principal.SecurityIdentifier]
+                              ).Value
+                          }
+                          catch {
+                              $SID = $null
+                          }
+
+                          # Everyone = S-1-1-0
+                          if ($SID -eq "S-1-1-0") {
+
+                              $Findings.Add(
+                                  [PSCustomObject]@{
+                                      Server       = $env:COMPUTERNAME
+                                      ShareName    = $ShareName
+                                      Path         = $Directory.FullName
+                                      Member       = "Everyone"
+                                      Rights       = $Permission.FileSystemRights.ToString()
+                                      AccessType   = $Permission.AccessControlType.ToString()
+                                      IsInherited  = $Permission.IsInherited
+                                  }
+                              )
+                          }
+                      }
+                  }
+                  catch {
+                      $Errors.Add(
+                          "ACL inspection failed on $($Directory.FullName): $($_.Exception.Message)"
+                      )
+                  }
+              }
+          }
+
+          # Return structured data to Ansible
+          $Ansible.Result = @{
+              findings = @($Findings.ToArray())
+              errors   = @($Errors.ToArray())
+          }
+
+          $Ansible.Changed = $false
+
+      register: acl_scan
+
+      changed_when: false
+
+    - name: Save audit results
+      ansible.builtin.set_fact:
+        acl_audit_findings: "{{ acl_scan.result.findings | default([]) }}"
+        acl_audit_errors: "{{ acl_scan.result.errors | default([]) }}"
+
+    - name: Display server audit summary
+      ansible.builtin.debug:
+        msg:
+          server: "{{ inventory_hostname }}"
+          findings: "{{ acl_audit_findings | length }}"
+          errors: "{{ acl_audit_errors | length }}"
+
+
+- name: Consolidate Windows audit report
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    report_group: windows
+    audit_report: []
+
+  tasks:
+
+    - name: Consolidate findings from all Windows servers
+      ansible.builtin.set_fact:
+        audit_report: >-
+          {{ audit_report +
+             (hostvars[item].acl_audit_findings | default([])) }}
+      loop: "{{ groups[report_group] | default([]) }}"
+      loop_control:
+        label: "{{ item }}"
+
+    - name: Display report header
+      ansible.builtin.debug:
+        msg: "SERVER | SHARENAME | PATH | MEMBER | RIGHTS | ACCESS TYPE | INHERITED"
+
+    - name: Display consolidated audit report
+      ansible.builtin.debug:
+        msg: >-
+          {{ '%-18s | %-18s | %-35s | %-10s | %-20s | %-8s | %s'
+             | format(
+                 item.Server,
+                 item.ShareName,
+                 item.Path,
+                 item.Member,
+                 item.Rights,
+                 item.AccessType,
+                 item.IsInherited
+             ) }}
+      loop: "{{ audit_report }}"
+      loop_control:
+        label: "{{ item.Server }} - {{ item.Path }}"
+
+    - name: Display servers without findings
+      ansible.builtin.debug:
+        msg: "No Everyone permissions found on the audited paths."
+      when: audit_report | length == 0
+
+    - name: Display audit errors
+      ansible.builtin.debug:
+        msg: "{{ item }}: {{ hostvars[item].acl_audit_errors }}"
+      loop: "{{ groups[report_group] | default([]) }}"
+      when:
+        - hostvars[item].acl_audit_errors is defined
+        - hostvars[item].acl_audit_errors | length > 0
