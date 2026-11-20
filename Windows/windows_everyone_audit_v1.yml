@@ -149,6 +149,7 @@
 
 
 
+
 - name: Consolidate Windows audit report
   hosts: localhost
   gather_facts: false
@@ -159,16 +160,19 @@
       ansible.builtin.set_fact:
         audit_report: []
 
-    - name: Collect findings from Windows servers
+    - name: Collect findings from audited Windows servers
       ansible.builtin.set_fact:
         audit_report: >-
           {{
             audit_report +
             (hostvars[item].acl_audit_findings | default([]))
           }}
-      loop: "{{ groups['windows'] }}"
+      loop: "{{ groups['all'] }}"
       loop_control:
         label: "{{ item }}"
+      when:
+        - item != 'localhost'
+        - hostvars[item].acl_audit_findings is defined
 
     - name: Display consolidated report header
       ansible.builtin.debug:
