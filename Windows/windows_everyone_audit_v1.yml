@@ -5,7 +5,7 @@
 # ============================================================
 
 - name: Audit Windows NTFS permissions for Everyone
-  hosts: windows
+  hosts: all
   gather_facts: false
 
   tasks:
