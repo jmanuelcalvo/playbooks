@@ -1,6 +1,6 @@
 ---
 - name: Monitoreo centralizado de certificados SSL/TLS
-  hosts: localhost
+  hosts: all
   gather_facts: false
 
   vars:
