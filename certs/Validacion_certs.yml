@@ -1,0 +1,120 @@
+---
+- name: Monitoreo centralizado de certificados SSL/TLS
+  hosts: localhost
+  gather_facts: false
+
+  vars:
+    dias_warning: 30
+    dias_critical: 15
+
+    dominios:
+      - dominio: www.redhat.com
+        puerto: 443
+
+      - dominio: www.google.com
+        puerto: 443
+
+      - dominio: www.microsoft.com
+        puerto: 443
+
+      - dominio: www.ansible.com
+        puerto: 443
+
+      - dominio: github.com
+        puerto: 443
+
+  tasks:
+
+    - name: Consultar certificados SSL/TLS
+      community.crypto.get_certificate:
+        host: "{{ item.dominio }}"
+        port: "{{ item.puerto }}"
+        asn1_base64: true
+      loop: "{{ dominios }}"
+      loop_control:
+        label: "{{ item.dominio }}"
+      register: certificados
+      failed_when: false
+
+    - name: Inicializar reporte
+      ansible.builtin.set_fact:
+        reporte_certificados: []
+
+    - name: Procesar resultados de certificados
+      ansible.builtin.set_fact:
+        reporte_certificados: >-
+          {{
+            reporte_certificados + [
+              {
+                'dominio': item.item.dominio,
+                'puerto': item.item.puerto,
+                'subject': item.subject.CN | default('N/A'),
+                'issuer': item.issuer.CN | default('N/A'),
+                'serial': item.serial_number | default('N/A'),
+                'not_before': item.not_before | default('N/A'),
+                'not_after': item.not_after | default('N/A'),
+                'dias_restantes': (
+                  (
+                    (item.not_after | to_datetime('%Y%m%d%H%M%SZ'))
+                    - now(utc=true)
+                  ).total_seconds() / 86400
+                ) | int if not (item.failed | default(false)) else 'N/A',
+                'estado': (
+                  'CRITICAL'
+                  if (
+                    item.expired | default(false) | bool
+                    or (
+                      (
+                        (
+                          (item.not_after | to_datetime('%Y%m%d%H%M%SZ'))
+                          - now(utc=true)
+                        ).total_seconds() / 86400
+                      ) | int
+                    ) <= (dias_critical | int)
+                  )
+                  else (
+                    'WARNING'
+                    if (
+                      (
+                        (
+                          (item.not_after | to_datetime('%Y%m%d%H%M%SZ'))
+                          - now(utc=true)
+                        ).total_seconds() / 86400
+                      ) | int
+                    ) <= (dias_warning | int)
+                    else 'OK'
+                  )
+                ) if not (item.failed | default(false))
+                else 'CRITICAL',
+                'error': item.msg | default('') if (item.failed | default(false)) else ''
+              }
+            ]
+          }}
+      loop: "{{ certificados.results }}"
+      loop_control:
+        label: "{{ item.item.dominio }}"
+
+    - name: Mostrar reporte consolidado
+      ansible.builtin.debug:
+        msg: "{{ reporte_certificados }}"
+
+
+    - name: Mostrar tabla de monitoreo SSL/TLS
+      ansible.builtin.debug:
+        msg: |
+          +-------------------------------+--------+----------------+----------+
+          | Dominio                       | Puerto | Dias restantes | Estado   |
+          +-------------------------------+--------+----------------+----------+
+          {% for cert in reporte_certificados %}
+          | {{ "%-29s" | format(cert.dominio | truncate(29, true, '...')) }} | {{ "%-6s" | format(cert.puerto) }} | {{ "%-14s" | format(cert.dias_restantes) }} | {{ "%-8s" | format(cert.estado) }} |
+          {% endfor %}
+          +-------------------------------+--------+----------------+----------+
+
+
+    - name: Resumen de certificados
+      ansible.builtin.debug:
+        msg:
+          - "Total certificados: {{ reporte_certificados | length }}"
+          - "OK: {{ reporte_certificados | selectattr('estado', 'equalto', 'OK') | list | length }}"
+          - "WARNING: {{ reporte_certificados | selectattr('estado', 'equalto', 'WARNING') | list | length }}"
+          - "CRITICAL: {{ reporte_certificados | selectattr('estado', 'equalto', 'CRITICAL') | list | length }}"
